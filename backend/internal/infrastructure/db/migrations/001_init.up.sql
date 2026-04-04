@@ -204,6 +204,12 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_loco_ts
     ON events (locomotive_id, ts DESC);
 
+
+
+
+
+-- MOCK DATA FOR PRESENTATION
+
 -- seed default locomotives
 INSERT INTO locomotives (number, type, model, power_type, manufacturer, year_built, depot, status)
 VALUES

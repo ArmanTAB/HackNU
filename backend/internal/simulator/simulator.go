@@ -39,6 +39,64 @@ type locoState struct {
 	anomalyParam      string
 	anomalyTicks      int
 	ticksSinceAnomaly int
+
+	profile locoProfile
+}
+
+// locoProfile defines per-locomotive behavioral envelope.
+type locoProfile struct {
+	baselineSpeed             float64
+	baselineEngineTemp        float64
+	baselineOilPressure       float64
+	baselineFuelLevel         float64
+	baselineBrakePipePressure float64
+	baselineEngineRpm         float64
+	// driftStrength: how hard values pull back to baseline each tick (0.0–1.0)
+	driftStrength float64
+
+	anomalyDisabled    bool
+	anomalyMinInterval int
+	anomalyMaxInterval int
+	anomalyMinDuration int
+	anomalyMaxDuration int
+	// anomalySeverity: "warning" or "critical"
+	anomalySeverity string
+}
+
+var locoProfiles = map[int]locoProfile{
+	// Loco 1: healthy electric — all params in normal range, rare short warning blips
+	1: {
+		baselineSpeed: 65, baselineEngineTemp: 82, baselineOilPressure: 4.5,
+		baselineFuelLevel: 70, baselineBrakePipePressure: 5.0, baselineEngineRpm: 1400,
+		driftStrength:      0.05,
+		anomalyMinInterval: 120, anomalyMaxInterval: 180,
+		anomalyMinDuration: 5, anomalyMaxDuration: 10,
+		anomalySeverity: "warning",
+	},
+	// Loco 2: diesel under stress — oil/fuel/brake in warning zone, frequent critical-capable anomalies
+	2: {
+		baselineSpeed: 75, baselineEngineTemp: 89, baselineOilPressure: 3.0,
+		baselineFuelLevel: 18, baselineBrakePipePressure: 4.0, baselineEngineRpm: 1580,
+		driftStrength:      0.12,
+		anomalyMinInterval: 30, anomalyMaxInterval: 50,
+		anomalyMinDuration: 15, anomalyMaxDuration: 25,
+		anomalySeverity: "critical",
+	},
+	// Loco 3: electric with persistent speed critical (>115) →
+	// unacknowledged critical alerts accumulate → health drops below 49
+	3: {
+		baselineSpeed: 118, baselineEngineTemp: 82, baselineOilPressure: 4.5,
+		baselineFuelLevel: 65, baselineBrakePipePressure: 3.0, baselineEngineRpm: 1400,
+		driftStrength:   0.30,
+		anomalyDisabled: true,
+	},
+}
+
+func profileFor(id int) locoProfile {
+	if p, ok := locoProfiles[id]; ok {
+		return p
+	}
+	return locoProfiles[1]
 }
 
 type Simulator struct {
@@ -60,29 +118,35 @@ func New(locomotiveIDs []int, producer *kafka.Producer, hz int) *Simulator {
 }
 
 func initialState(id int) *locoState {
+	p := profileFor(id)
+	initialAnomalyOffset := 0
+	if p.anomalyMinInterval > 0 {
+		initialAnomalyOffset = rand.Intn(p.anomalyMinInterval)
+	}
 	return &locoState{
 		locomotiveID:          id,
-		speed:                 60.0 + rand.Float64()*20,
+		speed:                 p.baselineSpeed + randn(5),
 		tractionForce:         200.0 + rand.Float64()*50,
 		wheelSlip:             0.5 + rand.Float64()*1.0,
-		engineRpm:             1400 + rand.Float64()*200,
-		engineTemp:            82 + rand.Float64()*8,
-		oilPressure:           4.2 + rand.Float64()*0.5,
+		engineRpm:             p.baselineEngineRpm + randn(50),
+		engineTemp:            p.baselineEngineTemp + randn(3),
+		oilPressure:           p.baselineOilPressure + randn(0.2),
 		oilTemp:               75 + rand.Float64()*10,
-		fuelLevel:             65 + rand.Float64()*15,
+		fuelLevel:             p.baselineFuelLevel + randn(2),
 		fuelConsumption:       15 + rand.Float64()*5,
 		pantographVoltage:     25000 + rand.Float64()*500,
 		tractionCurrent:       1000 + rand.Float64()*200,
 		tractionVoltage:       800 + rand.Float64()*50,
 		inverterTemp:          55 + rand.Float64()*10,
 		batteryVoltage:        24.5 + rand.Float64()*1,
-		brakePipePressure:     5.0 + rand.Float64()*0.2,
+		brakePipePressure:     p.baselineBrakePipePressure + randn(0.1),
 		brakeCylinderPressure: 0.1 + rand.Float64()*0.1,
 		mainReservoirPressure: 8.5 + rand.Float64()*0.5,
 		ambientTemp:           15 + rand.Float64()*10,
 		gpsLat:                51.1801 + rand.Float64()*0.01,
 		gpsLon:                71.4460 + rand.Float64()*0.01,
-		ticksSinceAnomaly:     rand.Intn(60),
+		ticksSinceAnomaly:     initialAnomalyOffset,
+		profile:               p,
 	}
 }
 
@@ -122,19 +186,32 @@ func (s *Simulator) Run(ctx context.Context) {
 }
 
 func (s *Simulator) tick(st *locoState) {
+	p := st.profile
 	st.ticksSinceAnomaly++
 
-	// Trigger anomaly every ~60 ticks
-	if st.anomalyTicks == 0 && st.ticksSinceAnomaly >= 60+rand.Intn(30) {
-		st.anomalyParam = randomAnomalyParam()
-		st.anomalyTicks = 10 + rand.Intn(20)
-		st.ticksSinceAnomaly = 0
-		slog.Info("simulator anomaly", "loco", st.locomotiveID, "param", st.anomalyParam, "ticks", st.anomalyTicks)
+	// Trigger anomaly — respects per-profile intervals and disabled flag
+	if !p.anomalyDisabled && st.anomalyTicks == 0 {
+		rangeWidth := p.anomalyMaxInterval - p.anomalyMinInterval
+		if rangeWidth < 1 {
+			rangeWidth = 1
+		}
+		interval := p.anomalyMinInterval + rand.Intn(rangeWidth)
+		if st.ticksSinceAnomaly >= interval {
+			durationRange := p.anomalyMaxDuration - p.anomalyMinDuration
+			if durationRange < 1 {
+				durationRange = 1
+			}
+			st.anomalyParam = randomAnomalyParam()
+			st.anomalyTicks = p.anomalyMinDuration + rand.Intn(durationRange)
+			st.ticksSinceAnomaly = 0
+			slog.Info("simulator anomaly", "loco", st.locomotiveID,
+				"param", st.anomalyParam, "ticks", st.anomalyTicks, "severity", p.anomalySeverity)
+		}
 	}
 
 	// Apply anomaly spike
 	if st.anomalyTicks > 0 {
-		applyAnomaly(st)
+		applyAnomaly(st, p.anomalySeverity)
 		st.anomalyTicks--
 	} else {
 		st.anomalyParam = ""
@@ -162,22 +239,57 @@ func (s *Simulator) tick(st *locoState) {
 	st.ambientTemp = ema(st.ambientTemp, clamp(st.ambientTemp+randn(0.1), -40, 50), alpha)
 	st.gpsLat += randn(0.0001)
 	st.gpsLon += randn(0.0001)
+
+	// Drift toward profile baseline — pulls values back after EMA+noise
+	if p.driftStrength > 0 {
+		ds := p.driftStrength
+		st.speed = ema(st.speed, p.baselineSpeed, ds)
+		st.engineTemp = ema(st.engineTemp, p.baselineEngineTemp, ds)
+		st.oilPressure = ema(st.oilPressure, p.baselineOilPressure, ds)
+		st.fuelLevel = ema(st.fuelLevel, p.baselineFuelLevel, ds)
+		st.brakePipePressure = ema(st.brakePipePressure, p.baselineBrakePipePressure, ds)
+		st.engineRpm = ema(st.engineRpm, p.baselineEngineRpm, ds)
+	}
 }
 
-func applyAnomaly(st *locoState) {
+func applyAnomaly(st *locoState, severity string) {
 	switch st.anomalyParam {
 	case "engine_temp":
-		st.engineTemp = 105 + rand.Float64()*10
+		if severity == "warning" {
+			st.engineTemp = 91 + rand.Float64()*8 // warning: 90–100
+		} else {
+			st.engineTemp = 102 + rand.Float64()*8 // critical: >100
+		}
 	case "oil_pressure":
-		st.oilPressure = 1.5 + rand.Float64()*0.5
+		if severity == "warning" {
+			st.oilPressure = 2.6 + rand.Float64()*0.8 // warning: 2.5–3.5
+		} else {
+			st.oilPressure = 1.0 + rand.Float64()*1.0 // critical: <2.5
+		}
 	case "fuel_level":
-		st.fuelLevel = 8 + rand.Float64()*5
+		if severity == "warning" {
+			st.fuelLevel = 15 + rand.Float64()*4 // warning: 15–20
+		} else {
+			st.fuelLevel = 8 + rand.Float64()*5 // critical: <15
+		}
 	case "brake_pipe_pressure":
-		st.brakePipePressure = 2.0 + rand.Float64()*0.5
+		if severity == "warning" {
+			st.brakePipePressure = 3.6 + rand.Float64()*0.8 // warning: 3.5–4.5
+		} else {
+			st.brakePipePressure = 2.0 + rand.Float64()*0.5 // critical: <3.5
+		}
 	case "speed":
-		st.speed = 118 + rand.Float64()*10
+		if severity == "warning" {
+			st.speed = 101 + rand.Float64()*13 // warning: 100–115
+		} else {
+			st.speed = 116 + rand.Float64()*10 // critical: >115
+		}
 	case "engine_rpm":
-		st.engineRpm = 1850 + rand.Float64()*100
+		if severity == "warning" {
+			st.engineRpm = 1610 + rand.Float64()*180 // warning: 1600–1800
+		} else {
+			st.engineRpm = 1820 + rand.Float64()*100 // critical: >1800
+		}
 	}
 }
 
