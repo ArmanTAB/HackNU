@@ -227,16 +227,29 @@ INSERT INTO telemetry_limits (
     fuel_level_min, fuel_level_max, fuel_level_warning_min, fuel_level_warning_max, fuel_level_critical_min, fuel_level_critical_max,
     brake_pipe_pressure_min, brake_pipe_pressure_max, brake_pipe_pressure_warning_min, brake_pipe_pressure_warning_max, brake_pipe_pressure_critical_min, brake_pipe_pressure_critical_max,
     engine_rpm_min, engine_rpm_max, engine_rpm_warning_min, engine_rpm_warning_max, engine_rpm_critical_min, engine_rpm_critical_max,
-    battery_voltage_min, battery_voltage_max, battery_voltage_warning_min, battery_voltage_warning_max, battery_voltage_critical_min, battery_voltage_critical_max
+    battery_voltage_min, battery_voltage_max, battery_voltage_warning_min, battery_voltage_warning_max, battery_voltage_critical_min, battery_voltage_critical_max,
+    pantograph_voltage_min, pantograph_voltage_max, pantograph_voltage_warning_min, pantograph_voltage_warning_max, pantograph_voltage_critical_min, pantograph_voltage_critical_max,
+    inverter_temp_min, inverter_temp_max, inverter_temp_warning_min, inverter_temp_warning_max, inverter_temp_critical_min, inverter_temp_critical_max
 )
 SELECT
     l.id,
-    0, 120, 100, 115, 115, 999,
-    60, 95, 90, 100, 100, 999,
-    3.5, 6.0, 2.5, 3.5, 0, 2.5,
-    20, 100, 15, 20, 0, 15,
-    4.5, 5.5, 3.5, 4.5, 0, 3.5,
-    600, 1800, 1600, 1800, 1800, 9999,
-    22, 30, 20, 22, 0, 20
+    -- speed:              normal 0-100,    warn fires >100,   crit fires >115
+    0, 100, 0, 100, 0, 115,
+    -- engine_temp:        normal 60-90,    warn fires >90,    crit fires >100
+    60, 90, 60, 90, 60, 100,
+    -- oil_pressure:       normal 3.5-6.0,  warn fires <3.5,   crit fires <2.5
+    3.5, 6.0, 3.5, 9999, 2.5, 9999,
+    -- fuel_level:         normal 20-100,   warn fires <20,    crit fires <15
+    20, 100, 20, 9999, 15, 9999,
+    -- brake_pipe:         normal 4.5-5.5,  warn fires <4.5,   crit fires <3.5
+    4.5, 5.5, 4.5, 9999, 3.5, 9999,
+    -- engine_rpm:         normal 600-1600, warn fires >1600,  crit fires >1800
+    600, 1600, 0, 1600, 0, 1800,
+    -- battery_voltage:    normal 22-30,    warn fires <22,    crit fires <20
+    22, 30, 22, 9999, 20, 9999,
+    -- pantograph_voltage: normal 23000-27000, warn fires <22000 or >28000, crit fires <20000 or >30000
+    23000, 27000, 22000, 28000, 20000, 30000,
+    -- inverter_temp:      normal 20-70,    warn fires >75,    crit fires >85
+    20, 70, 0, 75, 0, 85
 FROM locomotives l
 ON CONFLICT (locomotive_id) DO NOTHING;

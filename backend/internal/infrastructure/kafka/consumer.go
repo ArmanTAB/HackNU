@@ -125,8 +125,7 @@ func (c *Consumer) process(ctx context.Context, data []byte) error {
 	}
 
 	// Check and create alerts
-	newAlerts, err := c.alertSvc.CheckAndCreate(ctx, &t, limits)
-	if err != nil {
+	if _, err := c.alertSvc.CheckAndCreate(ctx, &t, limits); err != nil {
 		slog.Error("kafka consumer: CheckAndCreate alerts", "err", err)
 	}
 
@@ -144,7 +143,12 @@ func (c *Consumer) process(ctx context.Context, data []byte) error {
 		c.lastSnapshot[t.LocomotiveID] = time.Now()
 	}
 
-	// Build WS broadcast payload
+	// Fetch all active alerts for WS broadcast
+	activeAlerts, err := c.alertSvc.GetAlerts(ctx, t.LocomotiveID, true, "")
+	if err != nil {
+		slog.Error("kafka consumer: GetAlerts", "err", err)
+	}
+
 	type alertSummary struct {
 		ID        int64  `json:"id"`
 		Parameter string `json:"parameter"`
@@ -153,7 +157,7 @@ func (c *Consumer) process(ctx context.Context, data []byte) error {
 	}
 
 	var alertSummaries []alertSummary
-	for _, a := range newAlerts {
+	for _, a := range activeAlerts {
 		alertSummaries = append(alertSummaries, alertSummary{
 			ID:        a.ID,
 			Parameter: a.ParameterName,

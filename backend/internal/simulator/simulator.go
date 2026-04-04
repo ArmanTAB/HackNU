@@ -51,6 +51,8 @@ type locoProfile struct {
 	baselineFuelLevel         float64
 	baselineBrakePipePressure float64
 	baselineEngineRpm         float64
+	baselinePantographVoltage float64
+	baselineInverterTemp      float64
 	// driftStrength: how hard values pull back to baseline each tick (0.0–1.0)
 	driftStrength float64
 
@@ -68,6 +70,7 @@ var locoProfiles = map[int]locoProfile{
 	1: {
 		baselineSpeed: 65, baselineEngineTemp: 82, baselineOilPressure: 4.5,
 		baselineFuelLevel: 70, baselineBrakePipePressure: 5.0, baselineEngineRpm: 1400,
+		baselinePantographVoltage: 25000, baselineInverterTemp: 57,
 		driftStrength:      0.05,
 		anomalyMinInterval: 120, anomalyMaxInterval: 180,
 		anomalyMinDuration: 5, anomalyMaxDuration: 10,
@@ -77,16 +80,19 @@ var locoProfiles = map[int]locoProfile{
 	2: {
 		baselineSpeed: 75, baselineEngineTemp: 89, baselineOilPressure: 3.0,
 		baselineFuelLevel: 18, baselineBrakePipePressure: 4.0, baselineEngineRpm: 1580,
+		baselinePantographVoltage: 25000, baselineInverterTemp: 64,
 		driftStrength:      0.12,
 		anomalyMinInterval: 30, anomalyMaxInterval: 50,
 		anomalyMinDuration: 15, anomalyMaxDuration: 25,
 		anomalySeverity: "critical",
 	},
-	// Loco 3: electric with persistent speed critical (>115) →
-	// unacknowledged critical alerts accumulate → health drops below 49
+	// Loco 3: electric — 4 params in critical zone:
+	//   speed >115, brake_pipe <3.5, pantograph <20000, inverter_temp >85
+	//   health from params ~62.5 − 4×8 alerts = ~30 (critical)
 	3: {
 		baselineSpeed: 118, baselineEngineTemp: 82, baselineOilPressure: 4.5,
-		baselineFuelLevel: 65, baselineBrakePipePressure: 3.0, baselineEngineRpm: 1400,
+		baselineFuelLevel: 65, baselineBrakePipePressure: 2.8, baselineEngineRpm: 1400,
+		baselinePantographVoltage: 17000, baselineInverterTemp: 95,
 		driftStrength:   0.30,
 		anomalyDisabled: true,
 	},
@@ -134,10 +140,10 @@ func initialState(id int) *locoState {
 		oilTemp:               75 + rand.Float64()*10,
 		fuelLevel:             p.baselineFuelLevel + randn(2),
 		fuelConsumption:       15 + rand.Float64()*5,
-		pantographVoltage:     25000 + rand.Float64()*500,
+		pantographVoltage:     p.baselinePantographVoltage + randn(200),
 		tractionCurrent:       1000 + rand.Float64()*200,
 		tractionVoltage:       800 + rand.Float64()*50,
-		inverterTemp:          55 + rand.Float64()*10,
+		inverterTemp:          p.baselineInverterTemp + randn(2),
 		batteryVoltage:        24.5 + rand.Float64()*1,
 		brakePipePressure:     p.baselineBrakePipePressure + randn(0.1),
 		brakeCylinderPressure: 0.1 + rand.Float64()*0.1,
@@ -166,7 +172,21 @@ func (s *Simulator) Run(ctx context.Context) {
 			slog.Info("simulator stopped")
 			return
 		case <-ticker.C:
+			locos := make([]*locoState, 0, len(s.states))
 			for _, state := range s.states {
+				locos = append(locos, state)
+			}
+			// Spread locomotive messages evenly across the tick interval
+			// so WS clients receive one message per loco per second, not a burst
+			spread := interval / time.Duration(len(locos)+1)
+			for i, state := range locos {
+				if i > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(spread):
+					}
+				}
 				s.tick(state)
 				t := stateToTelemetry(state)
 				data, err := json.Marshal(t)
@@ -249,6 +269,8 @@ func (s *Simulator) tick(st *locoState) {
 		st.fuelLevel = ema(st.fuelLevel, p.baselineFuelLevel, ds)
 		st.brakePipePressure = ema(st.brakePipePressure, p.baselineBrakePipePressure, ds)
 		st.engineRpm = ema(st.engineRpm, p.baselineEngineRpm, ds)
+		st.pantographVoltage = ema(st.pantographVoltage, p.baselinePantographVoltage, ds)
+		st.inverterTemp = ema(st.inverterTemp, p.baselineInverterTemp, ds)
 	}
 }
 
