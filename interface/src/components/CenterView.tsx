@@ -32,12 +32,12 @@ export function CenterView() {
     scene.background = new THREE.Color(0xdde3ec);
     scene.fog = new THREE.Fog(0xdde3ec, 35, 90);
 
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 200);
-    camera.position.set(10, 5, 15);
     const defaultTarget = new THREE.Vector3(0, 1.5, 0);
     const defaultPos = new THREE.Vector3(10, 5, 15);
     let desiredTarget = defaultTarget.clone();
     let desiredPos = defaultPos.clone();
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 200);
+    camera.position.set(7, 3, 5);
 
     const controls = new THREE.OrbitControls(camera, canvas);
     controls.enableDamping = true;
@@ -46,9 +46,10 @@ export function CenterView() {
     controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI * 0.52;
     controls.target.copy(defaultTarget);
+    controls.target.set(0, 1, 1);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-    const sun = new THREE.DirectionalLight(0xfff5e0, 2.2);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const sun = new THREE.DirectionalLight(0xfff5e0, 1.6);
     sun.position.set(12, 20, 14);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
@@ -71,7 +72,7 @@ export function CenterView() {
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(120, 120),
       new THREE.MeshStandardMaterial({
-        color: 0xcfd6e0,
+        color: 0x4a7c4e,
         roughness: 0.95,
         metalness: 0,
       }),
@@ -79,12 +80,10 @@ export function CenterView() {
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
-    const grid = new THREE.GridHelper(80, 80, 0xb8c4d4, 0xc8d0dc);
-    grid.position.y = 0.002;
-    scene.add(grid);
 
     // Telegraph poles
     const poles: any[] = [];
+    const rails: any[] = [];
     const N_POLES = 14,
       SPACING = 6,
       LANE = -5;
@@ -98,6 +97,17 @@ export function CenterView() {
       roughness: 0.9,
       metalness: 0.05,
     });
+    const railMat = new THREE.MeshStandardMaterial({
+      color: 0x2c2c2c,
+      roughness: 0.25,
+      metalness: 0.8,
+    });
+    const sleeperMat = new THREE.MeshStandardMaterial({
+      color: 0x3A220F,
+      roughness: 0.8,
+      metalness: 0.15,
+    });
+
     for (let i = 0; i < N_POLES; i++) {
       const g = new THREE.Group();
       const post = new THREE.Mesh(
@@ -134,6 +144,31 @@ export function CenterView() {
       g.position.set(LANE, 0, -i * SPACING);
       scene.add(g);
       poles.push(g);
+
+      // Rails and sleepers under train
+      const railLength = SPACING + 0.1;
+      const leftRail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.05, railLength),
+        railMat,
+      );
+      const rightRail = leftRail.clone();
+      leftRail.position.set(-0.3, 0.03, -i * SPACING);
+      rightRail.position.set(0.3, 0.03, -i * SPACING);
+      leftRail.castShadow = true;
+      rightRail.castShadow = true;
+      scene.add(leftRail, rightRail);
+      rails.push(leftRail, rightRail);
+
+      for (let j = 0; j < 2; j++) {
+        const sleeper = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 0.04, 0.16),
+          sleeperMat,
+        );
+        sleeper.position.set(0, 0.02, -i * SPACING - j * (SPACING / 2));
+        sleeper.castShadow = true;
+        scene.add(sleeper);
+        rails.push(sleeper);
+      }
     }
 
     function resize() {
@@ -618,14 +653,17 @@ export function CenterView() {
     (window as any).__speedRef = speedRef;
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      controls.target.lerp(desiredTarget, 0.08);
-      camera.position.lerp(desiredPos, 0.08);
       controls.update();
       const mv = (speedRef.current / 100) * 0.2;
       poles.forEach((p: any) => {
         p.position.z -= mv;
         if (p.position.z > 25) p.position.z -= SPACING * N_POLES;
         if (p.position.z < -25) p.position.z += SPACING * N_POLES;
+      });
+      rails.forEach((r: any) => {
+        r.position.z -= mv;
+        if (r.position.z > 25) r.position.z -= SPACING * N_POLES;
+        if (r.position.z < -25) r.position.z += SPACING * N_POLES;
       });
       renderer.render(scene, camera);
     };
