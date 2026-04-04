@@ -2,6 +2,35 @@ import { useEffect, useRef } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
 import type { TelemetryFrame } from "../types/telemetry";
 
+type LatLng = [number, number];
+
+// Загружаем маршрут один раз и двигаем поезд по нему
+let routePoints: LatLng[] = [];
+fetch("/almaty-astana.json")
+  .then((r) => r.json())
+  .then((geojson) => {
+    const pts: LatLng[] = [];
+    for (const f of geojson.features ?? []) {
+      const g = f.geometry;
+      if (g?.type === "MultiLineString") {
+        for (const line of g.coordinates) for (const [lon, lat] of line) pts.push([lat, lon]);
+      } else if (g?.type === "LineString") {
+        for (const [lon, lat] of g.coordinates) pts.push([lat, lon]);
+      }
+    }
+    routePoints = pts;
+  })
+  .catch(() => {});
+
+function getRoutePosition(progress: number): LatLng | null {
+  if (routePoints.length < 2) return null;
+  const idx = Math.min(Math.floor(progress * (routePoints.length - 1)), routePoints.length - 2);
+  const t   = progress * (routePoints.length - 1) - idx;
+  const a   = routePoints[idx];
+  const b   = routePoints[idx + 1];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+
 type Limit = {
   min?: number;
   max?: number;
@@ -64,6 +93,7 @@ function makeState() {
     traction: 220,
     current: 1420,
     fuel_rate: 38,
+    _progress: 0.0, // 0..1 вдоль маршрута
   };
 }
 
@@ -187,10 +217,11 @@ export function useSimulator() {
       const status =
         score > 70 ? "normal" : score > 40 ? "warning" : "critical";
 
+      const { _progress, ...sClean } = s;
       const frame: TelemetryFrame = {
         ts: Date.now(),
         locomotive_id: "SD40-2-0847",
-        ...s,
+        ...sClean,
         health_score: score,
         health_status: status,
         alerts: [],

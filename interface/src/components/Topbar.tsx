@@ -62,8 +62,8 @@ export function Topbar({ routeInfo, onBack, actionLabel, onAction }: Props) {
         {actionLabel && onAction && (
           <button className="t-action" onClick={onAction}>{actionLabel}</button>
         )}
-        <div className="live" style={{ color: connected ? "var(--ok)" : "var(--crit)" }}>
-          <div className="live-dot" style={{ background: connected ? "var(--ok)" : "var(--crit)" }} />
+        <div className={connected ? "live live--ok" : "live live--down"}>
+          <div className="live-dot" />
           {connected ? "LIVE · 1Hz" : "НЕТ СВЯЗИ"}
         </div>
         <button className="t-action" onClick={toggle} title="Переключить тему">

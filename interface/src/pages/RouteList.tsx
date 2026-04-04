@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useThemeStore } from "../store/useThemeStore";
 
@@ -50,18 +50,42 @@ const STATUS_LABEL: Record<string, string> = {
   critical: "КРИТИЧНО",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  normal: "var(--ok)",
-  warning: "var(--warn)",
-  critical: "var(--crit)",
-};
-
 type FilterType = "all" | "normal" | "warning" | "critical";
+
+function healthBucket(value: number) {
+  const bucket = Math.round(value / 10) * 10;
+  return Math.max(0, Math.min(100, bucket));
+}
 
 export function RouteList() {
   const navigate = useNavigate();
   const { dark, toggle } = useThemeStore();
   const [filter, setFilter] = useState<FilterType>("all");
+  const [backendStatus, setBackendStatus] = useState<"checking" | "ok" | "down">("checking");
+
+  useEffect(() => {
+    let active = true;
+    const check = () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      fetch("/healthz", { signal: controller.signal })
+        .then((r) => {
+          if (!active) return;
+          setBackendStatus(r.ok ? "ok" : "down");
+        })
+        .catch(() => {
+          if (active) setBackendStatus("down");
+        })
+        .finally(() => clearTimeout(timeout));
+    };
+
+    check();
+    const t = setInterval(check, 10000);
+    return () => {
+      active = false;
+      clearInterval(t);
+    };
+  }, []);
 
   const filtered =
     filter === "all" ? ROUTES : ROUTES.filter((r) => r.status === filter);
@@ -89,61 +113,34 @@ export function RouteList() {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-      }}
-    >
-      {/* Topbar */}
-      <div
-        style={{
-          background: "var(--bg2)",
-          borderBottom: "1.5px solid var(--border)",
-          padding: "0 32px",
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          boxShadow: "0 1px 4px rgba(0,0,0,.06)",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 16,
-            letterSpacing: ".18em",
-            color: "var(--cyan)",
-            textTransform: "uppercase",
-            fontWeight: 700,
-          }}
-        >
-          Цифровой двойник
-        </span>
-        <span
-          style={{
-            fontSize: 14,
-            color: "var(--text3)",
-            letterSpacing: ".08em",
-          }}
-        >
-          Центр управления · КТЖ
-        </span>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 14, color: "var(--text3)" }}>
+    <div className="route-page">
+      <div className="route-topbar">
+        <span className="route-topbar-title">Цифровой двойник</span>
+        <span className="route-topbar-sub">Центр управления · КТЖ</span>
+        <div className="route-topbar-right">
+          <div
+            className={
+              backendStatus === "ok"
+                ? "status status--ok"
+                : backendStatus === "down"
+                  ? "status status--down"
+                  : "status status--checking"
+            }
+            title="Статус бэкенда"
+          >
+            <div className="status-dot" />
+            {backendStatus === "ok"
+              ? "SERVER OK"
+              : backendStatus === "down"
+                ? "SERVER DOWN"
+                : "SERVER..."}
+          </div>
+          <span className="route-topbar-clock">
             {new Date().toLocaleString("ru-RU")}
           </span>
           <button
             onClick={toggle}
-            style={{
-              background: "transparent",
-              border: "1.5px solid var(--border)",
-              borderRadius: 8,
-              padding: "6px 14px",
-              fontSize: 16,
-              cursor: "pointer",
-              color: "var(--text2)",
-              transition: "background .15s",
-            }}
+            className="route-theme-btn"
             title="Переключить тему"
           >
             {dark ? "☀" : "🌙"}
@@ -151,52 +148,25 @@ export function RouteList() {
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ padding: "32px 40px" }}>
-        {/* Header + filters */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
+      <div className="route-content">
+        <div className="route-header">
           <div>
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: "var(--text)",
-                letterSpacing: ".08em",
-                textTransform: "uppercase",
-              }}
-            >
-              Активные маршруты
-            </div>
-            <div style={{ fontSize: 14, color: "var(--text3)", marginTop: 6 }}>
+            <div className="route-header-title">Активные маршруты</div>
+            <div className="route-header-sub">
               {filtered.length} из {ROUTES.length} локомотивов
             </div>
           </div>
 
-          {/* Filter tabs */}
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="route-filters">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: ".08em",
-                  padding: "8px 16px",
-                  borderRadius: 6,
-                  border: `1.5px solid ${filter === f.key ? f.color : "var(--border)"}`,
-                  background: filter === f.key ? f.color + "18" : "transparent",
-                  color: filter === f.key ? f.color : "var(--text3)",
-                  cursor: "pointer",
-                  transition: "all .2s",
-                }}
+                className={
+                  filter === f.key
+                    ? `route-filter-btn route-filter-btn--${f.key} is-active`
+                    : `route-filter-btn route-filter-btn--${f.key}`
+                }
               >
                 {f.label}
               </button>
@@ -204,189 +174,56 @@ export function RouteList() {
           </div>
         </div>
 
-        {/* Table */}
-        <div
-          style={{
-            background: "var(--bg2)",
-            border: "1.5px solid var(--border)",
-            borderRadius: 8,
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "140px 120px 1.6fr 140px 160px 160px 56px",
-              columnGap: 16,
-              padding: "12px 20px",
-              borderBottom: "1.5px solid var(--border)",
-              fontSize: 12,
-              letterSpacing: ".13em",
-              color: "var(--text3)",
-              textTransform: "uppercase",
-              fontWeight: 700,
-            }}
-          >
+        <div className="route-table">
+          <div className="route-table-head">
             <span>Серия</span>
             <span>Маршрут</span>
             <span>Направление</span>
-            <span style={{ textAlign: "center" }}>Здоровье</span>
+            <span className="route-table-health">Здоровье</span>
             <span>Машинист</span>
             <span>Номер</span>
             <span></span>
           </div>
 
-          {/* Rows */}
           {filtered.length === 0 && (
-            <div
-              style={{
-                padding: "36px",
-                textAlign: "center",
-                fontSize: 15,
-                color: "var(--text3)",
-              }}
-            >
-              Нет маршрутов с таким статусом
-            </div>
+            <div className="route-empty">Нет маршрутов с таким статусом</div>
           )}
 
           {filtered.map((r, i) => (
             <div
               key={r.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "140px 120px 1.6fr 140px 160px 160px 56px",
-                columnGap: 16,
-                padding: "16px 20px",
-                borderBottom:
-                  i < filtered.length - 1 ? "1px solid var(--border)" : "none",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "background .15s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--bg3)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
+              className={`route-row status-${r.status} ${i < filtered.length - 1 ? "route-row--border" : ""}`}
               onClick={() => navigate(`/dashboard/${r.id}`)}
             >
-              {/* Серия */}
-              <div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "var(--text)",
-                  }}
-                >
-                  {r.serial}
-                </div>
-                <div
-                  style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}
-                >
-                  {r.name}
-                </div>
+              <div className="route-cell-series">
+                <div className="route-serial">{r.serial}</div>
+                <div className="route-name">{r.name}</div>
               </div>
 
-              {/* Маршрут */}
-              <div
-                style={{ fontSize: 15, color: "var(--cyan)", fontWeight: 700 }}
-              >
-                {r.route}
-              </div>
+              <div className="route-cell-route">{r.route}</div>
 
-              {/* Направление */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 14,
-                  color: "var(--text)",
-                }}
-              >
+              <div className="route-cell-direction">
                 <span>{r.from}</span>
-                <span style={{ color: "var(--text3)" }}>——</span>
+                <span className="route-direction-sep">——</span>
                 <span>{r.to}</span>
-                <span
-                  style={{ fontSize: 12, color: "var(--text3)", marginLeft: 6 }}
-                >
-                  {r.distance}
-                </span>
+                <span className="route-distance">{r.distance}</span>
               </div>
 
-              {/* Здоровье */}
-              <div style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: STATUS_COLOR[r.status],
-                  }}
-                >
-                  {r.health}
-                </div>
-                <div
-                  style={{
-                    height: 3,
-                    background: "var(--border)",
-                    borderRadius: 2,
-                    marginTop: 6,
-                  }}
-                >
+              <div className="route-cell-health">
+                <div className="route-health-value">{r.health}</div>
+                <div className="route-health-bar">
                   <div
-                    style={{
-                      height: "100%",
-                      width: r.health + "%",
-                      background: STATUS_COLOR[r.status],
-                      borderRadius: 2,
-                      transition: "width .5s",
-                    }}
+                    className={`route-health-fill route-health-fill--${healthBucket(r.health)}`}
                   />
                 </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: STATUS_COLOR[r.status],
-                    marginTop: 5,
-                    fontWeight: 700,
-                    letterSpacing: ".06em",
-                  }}
-                >
-                  {STATUS_LABEL[r.status]}
-                </div>
+                <div className="route-health-label">{STATUS_LABEL[r.status]}</div>
               </div>
 
-              {/* Машинист */}
-              <div style={{ fontSize: 14, color: "var(--text2)" }}>
-                {r.driver}
-              </div>
+              <div className="route-cell-driver">{r.driver}</div>
 
-              {/* Номер */}
-              <div style={{ fontSize: 14, color: "var(--text2)" }}>
-                {r.phone}
-              </div>
+              <div className="route-cell-phone">{r.phone}</div>
 
-              {/* Действие */}
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 6,
-                  border: "1.5px solid var(--border)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "var(--cyan)",
-                  fontSize: 18,
-                  transition: "all .15s",
-                }}
-              >
-                →
-              </div>
+              <div className="route-cell-action">→</div>
             </div>
           ))}
         </div>

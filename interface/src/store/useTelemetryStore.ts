@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { TelemetryFrame, HistoryPoint, Alert } from "../types/telemetry";
+import type { TelemetryFrame, HistoryPoint, Alert, HealthFactor, EventItem } from "../types/telemetry";
 
 const HISTORY_MAX  = 60;   // для спарклайнов
 const SNAPSHOT_MAX = 300;  // 5 минут при 1 Гц
@@ -9,12 +9,21 @@ interface TelemetryStore {
   history:      HistoryPoint[];
   snapshots:    TelemetryFrame[];   // полные кадры для time-travel
   alerts:       Alert[];
+  healthFactors: HealthFactor[];
+  events:       EventItem[];
   connected:    boolean;
   replayIndex:  number | null;      // null = live
+  replayWindow: number;             // minutes
   setFrame:     (f: TelemetryFrame) => void;
+  setSnapshots: (frames: TelemetryFrame[]) => void;
   addAlerts:    (alerts: Alert[]) => void;
+  ackAlert:     (id: string) => void;
+  setHealthFactors: (factors: HealthFactor[]) => void;
+  setEvents:    (events: EventItem[]) => void;
+  addEvent:     (event: EventItem) => void;
   setConnected: (v: boolean) => void;
   setReplay:    (i: number | null) => void;
+  setReplayWindow: (m: number) => void;
 }
 
 function mergeAlerts(incoming: Alert[], existing: Alert[]): Alert[] {
@@ -33,8 +42,11 @@ export const useTelemetryStore = create<TelemetryStore>((set) => ({
   history:     [],
   snapshots:   [],
   alerts:      [],
+  healthFactors: [],
+  events:      [],
   connected:   false,
   replayIndex: null,
+  replayWindow: 5,
 
   setFrame: (f) =>
     set((s) => {
@@ -59,6 +71,31 @@ export const useTelemetryStore = create<TelemetryStore>((set) => ({
   addAlerts: (alerts) =>
     set((s) => ({ alerts: mergeAlerts(alerts, s.alerts) })),
 
+  ackAlert: (id) =>
+    set((s) => ({
+      alerts: s.alerts.map((a) =>
+        a.id === id ? { ...a, is_acknowledged: true, acknowledged_at: Date.now() } : a,
+      ),
+    })),
+
+  setHealthFactors: (healthFactors) => set({ healthFactors }),
+
+  setEvents: (events) =>
+    set(() => ({
+      events: events
+        .slice()
+        .sort((a, b) => new Date(b.ts ?? 0).getTime() - new Date(a.ts ?? 0).getTime()),
+    })),
+
+  addEvent: (event) =>
+    set((s) => ({
+      events: [event, ...s.events].slice(0, 20),
+    })),
+
+  setSnapshots: (frames) =>
+    set(() => ({ snapshots: frames, replayIndex: null })),
+
   setConnected: (connected) => set({ connected }),
   setReplay:    (replayIndex) => set({ replayIndex }),
+  setReplayWindow: (replayWindow) => set({ replayWindow }),
 }));

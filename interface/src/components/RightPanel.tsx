@@ -69,12 +69,17 @@ interface RouteInfo {
 export function RightPanel({
   routeInfo,
   showScenarios,
+  locomotiveId,
 }: {
   routeInfo?: RouteInfo;
   showScenarios?: boolean;
+  locomotiveId?: number;
 }) {
   const frame = useDisplayFrame();
   const alerts = useTelemetryStore((s) => s.alerts);
+  const ackAlert = useTelemetryStore((s) => s.ackAlert);
+  const events = useTelemetryStore((s) => s.events);
+  const addEvent = useTelemetryStore((s) => s.addEvent);
   const score = frame?.health_score ?? 100;
   const nodeColor =
     score > 70 ? "var(--ok)" : score > 40 ? "var(--warn)" : "var(--crit)";
@@ -82,6 +87,9 @@ export function RightPanel({
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [expandedScene, setExpandedScene] = useState<string | null>(null);
   const [sliderVals, setSliderVals] = useState<Record<string, number>>({});
+  const [eventType, setEventType] = useState("note");
+  const [eventText, setEventText] = useState("");
+  const [eventSaving, setEventSaving] = useState(false);
 
   // следим за глобальным активным узлом (устанавливается из CenterView при клике на 3D)
   useEffect(() => {
@@ -106,6 +114,63 @@ export function RightPanel({
     }
   }
 
+  function handleAck(alertId: string) {
+    if (!locomotiveId) return;
+    fetch(`/api/v1/locomotives/${locomotiveId}/alerts/${alertId}/acknowledge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ acknowledged_by: "dispatcher" }),
+    })
+      .then((r) => {
+        if (r.ok) ackAlert(alertId);
+      })
+      .catch(() => undefined);
+  }
+
+  function handleExportCsv() {
+    if (!locomotiveId) return;
+    const to = new Date();
+    const from = new Date(to.getTime() - 15 * 60 * 1000);
+    const params = new URLSearchParams({
+      from: from.toISOString(),
+      to: to.toISOString(),
+    });
+    const url = `/api/v1/locomotives/${locomotiveId}/export/csv?${params.toString()}`;
+    window.open(url, "_blank");
+  }
+
+  function handleCreateEvent() {
+    if (!locomotiveId || !eventText.trim() || eventSaving) return;
+    setEventSaving(true);
+    const payload = {
+      locomotive_id: locomotiveId,
+      event_type: eventType,
+      description: eventText.trim(),
+      created_by: "dispatcher",
+      ts: new Date().toISOString(),
+    };
+
+    fetch(`/api/v1/locomotives/${locomotiveId}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) addEvent(data);
+        setEventText("");
+      })
+      .catch(() => undefined)
+      .finally(() => setEventSaving(false));
+  }
+
+  function eventLabel(type?: string) {
+    if (type === "incident") return "Инцидент";
+    if (type === "maintenance") return "Обслуживание";
+    if (type === "replay_mark") return "Метка реплея";
+    return "Заметка";
+  }
+
   return (
     <div className="panel panel-r">
       {routeInfo && routeInfo.path.length > 1 && (
@@ -117,6 +182,9 @@ export function RightPanel({
             to={routeInfo.to}
             expandable
           />
+          <button className="scbtn" style={{ marginTop: 10 }} onClick={handleExportCsv}>
+            Экспорт CSV (15 мин)
+          </button>
         </div>
       )}
       <div className="sec">
@@ -289,6 +357,47 @@ export function RightPanel({
         </>
       )}
 
+      <div className="sec">
+        <div className="sec-t">События</div>
+        <div className="event-form">
+          <select
+            title="Тип события"
+            value={eventType}
+            onChange={(e) => setEventType(e.target.value)}
+          >
+            <option value="note">Заметка</option>
+            <option value="incident">Инцидент</option>
+            <option value="maintenance">Обслуживание</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Короткое описание"
+            value={eventText}
+            onChange={(e) => setEventText(e.target.value)}
+          />
+          <button onClick={handleCreateEvent} disabled={!eventText.trim() || eventSaving}>
+            Добавить
+          </button>
+        </div>
+        <div className="event-list">
+          {events.length === 0 ? (
+            <div className="event-item event-empty">Событий пока нет</div>
+          ) : (
+            events.slice(0, 8).map((e, idx) => (
+              <div key={`${e.id ?? "evt"}-${idx}`} className="event-item">
+                <div className="event-meta">
+                  <span className="event-type">{eventLabel(e.event_type)}</span>
+                  <span className="event-time">
+                    {e.ts ? new Date(e.ts).toLocaleTimeString("ru-RU") : "--:--"}
+                  </span>
+                </div>
+                <div className="event-desc">{e.description ?? "Без описания"}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="sec" style={{ flex: 1 }}>
         <div className="sec-t">Алерты</div>
         <div id="alist">
@@ -310,7 +419,7 @@ export function RightPanel({
                       a.severity === "critical" ? "var(--crit)" : "var(--warn)",
                   }}
                 />
-                <div>
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
                       color:
@@ -323,6 +432,22 @@ export function RightPanel({
                     {new Date(a.ts).toLocaleTimeString("ru-RU")}
                   </div>
                 </div>
+                {!a.is_acknowledged && locomotiveId && (
+                  <button
+                    onClick={() => handleAck(a.id)}
+                    style={{
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      padding: "4px 8px",
+                      background: "transparent",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      color: "var(--text2)",
+                    }}
+                  >
+                    ACK
+                  </button>
+                )}
               </div>
             ))
           )}
