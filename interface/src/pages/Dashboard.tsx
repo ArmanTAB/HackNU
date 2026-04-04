@@ -21,7 +21,7 @@ const ROUTE_INFO: Record<
     path: [number, number][];
   }
 > = {
-  "SD40-2-0847": {
+  "1": {
     serial: "СЕР.0847",
     route: "А-07",
     from: "Алматы",
@@ -35,7 +35,7 @@ const ROUTE_INFO: Record<
       [51.1694, 71.4491],
     ],
   },
-  "SD40-2-0312": {
+  "2": {
     serial: "СЕР.0312",
     route: "Б-03",
     from: "Астана",
@@ -49,7 +49,7 @@ const ROUTE_INFO: Record<
       [50.2839, 57.1669],
     ],
   },
-  "SD40-2-0521": {
+  "3": {
     serial: "СЕР.0521",
     route: "В-11",
     from: "Шымкент",
@@ -63,27 +63,6 @@ const ROUTE_INFO: Record<
       [44.8488, 65.4823],
     ],
   },
-  "SD40-2-0934": {
-    serial: "СЕР.0934",
-    route: "Г-05",
-    from: "Актобе",
-    to: "Уральск",
-    distance: "548 км",
-    driver: "Жумабеков С.",
-    phone: "+7 777 333 44 55",
-    path: [
-      [50.2839, 57.1669],
-      [50.8050, 53.2000],
-      [51.2333, 51.3667],
-    ],
-  },
-};
-
-const WS_ID_MAP: Record<string, number> = {
-  "SD40-2-0847": 1,
-  "SD40-2-0312": 2,
-  "SD40-2-0521": 3,
-  "SD40-2-0934": 1,
 };
 
 function mapApiAlerts(data: any[]): { id: string; severity: "warning" | "critical"; code: string; message: string; ts: number }[] {
@@ -99,8 +78,8 @@ function mapApiAlerts(data: any[]): { id: string; severity: "warning" | "critica
 export function Dashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["SD40-2-0847"];
-  const wsId = WS_ID_MAP[id ?? ""] ?? 1;
+  const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["1"];
+  const wsId = Number(id ?? 1);
   const addAlerts = useTelemetryStore((s) => s.addAlerts);
 
   useTelemetryWS(String(wsId), "ws://localhost:8081/ws");
@@ -126,7 +105,7 @@ export function Dashboard() {
         routeInfo={info}
         onBack={() => navigate("/")}
         actionLabel="Тестирование"
-        onAction={() => navigate(`/testing/${id ?? info.serial}`)}
+        onAction={() => navigate(`/testing/${id ?? 1}`)}
       />
       <LeftPanel />
       <CenterView />

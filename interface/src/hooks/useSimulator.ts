@@ -2,23 +2,53 @@ import { useEffect, useRef } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
 import type { TelemetryFrame } from "../types/telemetry";
 
-const THRESHOLDS = {
-  engine_temp: { ok: [0, 105], warn: [105, 135] },
-  oil_pressure: { ok: [3.5, 12], warn: [2, 3.5] },
-  speed: { ok: [0, 120], warn: [120, 140] },
-  fuel_level: { ok: [15, 100], warn: [5, 15] },
-  voltage: { ok: [600, 750], warn: [550, 600] },
+type Limit = {
+  min?: number;
+  max?: number;
+  warnMin?: number;
+  warnMax?: number;
+  critMin?: number;
+  critMax?: number;
 };
+
+const LIMITS: Record<string, Limit> = {
+  speed: { min: 0, max: 120, warnMin: 100, warnMax: 115, critMin: 115, critMax: 999 },
+  rpm: { min: 600, max: 1800, warnMin: 1600, warnMax: 1800, critMin: 1800, critMax: 9999 },
+  engine_temp: { min: 60, max: 95, warnMin: 90, warnMax: 100, critMin: 100, critMax: 999 },
+  oil_pressure: { min: 3.5, max: 6, warnMin: 2.5, warnMax: 3.5, critMin: 0, critMax: 2.5 },
+  fuel_level: { min: 20, max: 100, warnMin: 15, warnMax: 20, critMin: 0, critMax: 15 },
+  voltage: { min: 600, max: 750, warnMin: 550, warnMax: 600, critMin: 0, critMax: 520 },
+  current: { min: 0, max: 2000, warnMin: 2000, warnMax: 2300, critMin: 2300, critMax: 9999 },
+  traction: { min: 0, max: 400, warnMin: 400, warnMax: 500, critMin: 500, critMax: 9999 },
+  fuel_rate: { min: 0, max: 80, warnMin: 80, warnMax: 100, critMin: 100, critMax: 9999 },
+};
+
+function inRange(v: number, min?: number, max?: number) {
+  if (min !== undefined && v < min) return false;
+  if (max !== undefined && v > max) return false;
+  return true;
+}
+
+function statusFromLimits(v: number, lim: Limit): "ok" | "warn" | "crit" {
+  if ((lim.critMin !== undefined || lim.critMax !== undefined) && inRange(v, lim.critMin, lim.critMax)) {
+    return "crit";
+  }
+  if ((lim.warnMin !== undefined || lim.warnMax !== undefined) && inRange(v, lim.warnMin, lim.warnMax)) {
+    return "warn";
+  }
+  if ((lim.min !== undefined || lim.max !== undefined) && inRange(v, lim.min, lim.max)) {
+    return "ok";
+  }
+  return "crit";
+}
 
 function calcHealth(s: ReturnType<typeof makeState>): number {
   let h = 100;
-  for (const key of Object.keys(THRESHOLDS) as (keyof typeof THRESHOLDS)[]) {
-    const { ok, warn } = THRESHOLDS[key];
-    const v = s[key as keyof typeof s] as number;
-    const inOk = v >= ok[0] && v <= ok[1];
-    const inWarn = v >= warn[0] && v <= warn[1];
-    if (!inOk && !inWarn) h -= 18;
-    else if (!inOk) h -= 7;
+  for (const [key, lim] of Object.entries(LIMITS)) {
+    const v = (s as any)[key] as number;
+    const st = statusFromLimits(v, lim);
+    if (st === "crit") h -= 18;
+    else if (st === "warn") h -= 7;
   }
   return Math.max(0, Math.min(100, h));
 }

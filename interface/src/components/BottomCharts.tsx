@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { useThemeStore } from "../store/useThemeStore";
 import type { HistoryPoint } from "../types/telemetry";
 
 const CHARTS = [
@@ -23,12 +24,13 @@ function Sparkline({ dataKey, color, min, max, unit }: {
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const history   = useTelemetryStore((s) => s.history);
+  const dark = useThemeStore((s) => s.dark);
 
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
     const pr  = c.parentElement!.getBoundingClientRect();
-    const dark = document.documentElement.classList.contains("dark");
+    const isDark = dark;
 
     const PAD_L = 46; // место под подписи оси Y
     const H     = 80;
@@ -40,11 +42,11 @@ function Sparkline({ dataKey, color, min, max, unit }: {
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
     // фон
-    ctx.fillStyle = dark ? "#162032" : "#ffffff";
+    ctx.fillStyle = isDark ? "#162032" : "#ffffff";
     ctx.fillRect(0, 0, W, H);
 
-    const gridColor  = dark ? "#243550" : "#e4eaf3";
-    const labelColor = dark ? "#4a6585" : "#94a3b8";
+    const gridColor  = isDark ? "#243550" : "#e4eaf3";
+    const labelColor = isDark ? "#4a6585" : "#94a3b8";
     const rng        = max - min || 1;
 
     // горизонтальные деления + подписи значений
@@ -98,7 +100,7 @@ function Sparkline({ dataKey, color, min, max, unit }: {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-  }, [history]);
+  }, [history, dark]);
 
   return <canvas ref={canvasRef} className="sp" />;
 }

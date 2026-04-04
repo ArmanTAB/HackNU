@@ -396,6 +396,7 @@ body {
   right: 18px;
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid var(--border);
   border-radius: 14px;
   padding: 16px 26px;
@@ -424,6 +425,7 @@ body {
   position: absolute;
   background: rgba(255,255,255,.96);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-left: 4px solid #ccc;
   border-radius: 0 12px 12px 0;
   padding: 14px 18px;

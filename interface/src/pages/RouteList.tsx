@@ -4,7 +4,7 @@ import { useThemeStore } from "../store/useThemeStore";
 
 const ROUTES = [
   {
-    id: "SD40-2-0847",
+    id: "1",
     name: "EMD SD40-2",
     serial: "СЕР.0847",
     route: "А-07",
@@ -17,7 +17,7 @@ const ROUTES = [
     phone: "+7 701 222 33 44",
   },
   {
-    id: "SD40-2-0312",
+    id: "2",
     name: "EMD SD40-2",
     serial: "СЕР.0312",
     route: "Б-03",
@@ -30,7 +30,7 @@ const ROUTES = [
     phone: "+7 702 111 22 33",
   },
   {
-    id: "SD40-2-0521",
+    id: "3",
     name: "EMD SD40-2",
     serial: "СЕР.0521",
     route: "В-11",
@@ -41,19 +41,6 @@ const ROUTES = [
     health: 23,
     driver: "Ахметов Д.",
     phone: "+7 705 888 77 66",
-  },
-  {
-    id: "SD40-2-0934",
-    name: "EMD SD40-2",
-    serial: "СЕР.0934",
-    route: "Г-05",
-    from: "Актобе",
-    to: "Уральск",
-    distance: "548 км",
-    status: "normal" as const,
-    health: 94,
-    driver: "Жумабеков С.",
-    phone: "+7 777 333 44 55",
   },
 ];
 

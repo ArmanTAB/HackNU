@@ -19,7 +19,7 @@ const ROUTE_INFO: Record<
     path: [number, number][];
   }
 > = {
-  "SD40-2-0847": {
+  "1": {
     serial: "СЕР.0847",
     route: "А-07",
     from: "Алматы",
@@ -33,7 +33,7 @@ const ROUTE_INFO: Record<
       [51.1694, 71.4491],
     ],
   },
-  "SD40-2-0312": {
+  "2": {
     serial: "СЕР.0312",
     route: "Б-03",
     from: "Астана",
@@ -47,7 +47,7 @@ const ROUTE_INFO: Record<
       [50.2839, 57.1669],
     ],
   },
-  "SD40-2-0521": {
+  "3": {
     serial: "СЕР.0521",
     route: "В-11",
     from: "Шымкент",
@@ -61,26 +61,12 @@ const ROUTE_INFO: Record<
       [44.8488, 65.4823],
     ],
   },
-  "SD40-2-0934": {
-    serial: "СЕР.0934",
-    route: "Г-05",
-    from: "Актобе",
-    to: "Уральск",
-    distance: "548 км",
-    driver: "Жумабеков С.",
-    phone: "+7 777 333 44 55",
-    path: [
-      [50.2839, 57.1669],
-      [50.8050, 53.2000],
-      [51.2333, 51.3667],
-    ],
-  },
 };
 
 export function TestingDashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["SD40-2-0847"];
+  const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["1"];
 
   useSimulator();
 
@@ -90,7 +76,7 @@ export function TestingDashboard() {
         routeInfo={info}
         onBack={() => navigate("/")}
         actionLabel="Мониторинг"
-        onAction={() => navigate(`/dashboard/${id ?? info.serial}`)}
+        onAction={() => navigate(`/dashboard/${id ?? 1}`)}
       />
       <LeftPanel />
       <CenterView />
