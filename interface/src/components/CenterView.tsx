@@ -143,42 +143,21 @@ export function CenterView() {
     window.addEventListener("resize", resize);
 
     // GLTF loader + mesh groups (из оригинала)
-    const BASE: Record<string, any> = {
-      custom7: new THREE.Color(0x2d3a4a),
-      bluesteel: new THREE.Color(0x8b1a1a),
-      custom12: new THREE.Color(0x1a1e24),
-      custom14: new THREE.Color(0xc8a040),
-      defaultmat: new THREE.Color(0x4a5260),
-      steel: new THREE.Color(0x909aaa),
-      glass: new THREE.Color(0x88aacc),
-      dark: new THREE.Color(0x1e2228),
-      lightred: new THREE.Color(0xff4444),
-      none: new THREE.Color(0x8090a0),
-    };
     const GROUPS: Record<string, (n: string) => boolean> = {
-      engine: (n) =>
-        n.includes("diesel_front") ||
-        n.includes("block_bevel") ||
-        n.includes("steam_engine") ||
-        n.includes("detail_piston") ||
-        n.includes("grate_square") ||
-        n.includes("body_vents"),
+      engine: (n) => n.includes("engine"),
       chimney: (n) => n.includes("chimney"),
-      wheels: (n) => n.includes("wheel_medium") || n.includes("grate_round"),
-      bogie: (n) => n.includes("bogie_frame") && !n.includes("connection"),
+      wheels: (n) => n.includes("wheel") || n.includes("grate_round"),
+      bogie: (n) => n.includes("brakes"),
       body: (n) =>
-        (n.includes("body_vent") && !n.includes("vents")) ||
+        (n.includes("body")) ||
         n.includes("body_detail") ||
         (n.includes("block") && n.includes("custom7")),
       fuel: (n) =>
         n.includes("attachment_barrel") ||
-        n.includes("coupling_large") ||
+        n.includes("gas") ||
         n.includes("bumper"),
       roof: (n) =>
-        n.includes("roof") ||
-        n.includes("fence") ||
-        n.includes("bus middle") ||
-        n.includes("bus_middle"),
+        n.includes("electric"),
       lights: (n) =>
         n.includes("detail_light") ||
         n.includes("detail_siren") ||
@@ -189,11 +168,8 @@ export function CenterView() {
     const origColors = new Map();
 
     function getBaseColor(name: string) {
-      const n = (name || "").toLowerCase().replace("clone", "");
-      for (const [key, col] of Object.entries(BASE)) {
-        if (n.includes(key.replace("mat", ""))) return col.clone();
-      }
-      return new THREE.Color(0x5a6070);
+      // Используем базовый серый цвет
+      return new THREE.Color(0xcccccc);
     }
     function makeMat(origMat: any) {
       const nm = (origMat.name || "").toLowerCase();
@@ -206,7 +182,8 @@ export function CenterView() {
           metalness: 0.1,
           transmission: 0.5,
         });
-      const col = getBaseColor(origMat.name);
+      // Используем оригинальный цвет материала из модели
+      const col = origMat.color ? new THREE.Color(origMat.color) : new THREE.Color(0xcccccc);
       const isShiny = nm.includes("steel") || nm.includes("custom14");
       return new THREE.MeshStandardMaterial({
         color: col,
@@ -261,7 +238,7 @@ export function CenterView() {
       chimney: ["rpm"],
       wheels: ["speed"],
       bogie: ["oil", "traction"],
-      body: ["temp"],
+      body: [],  // убрали "temp" - body не реагирует на температуру
       fuel: ["fuel", "cons"],
       roof: ["volt", "curr"],
       lights: ["volt"],
@@ -465,6 +442,21 @@ export function CenterView() {
           meshes.forEach((m) => setMeshColor(m, COL3.select));
         }
       }
+
+      // Кастомная раскраска при перегреве двигателя
+      const tempStatus = st("temp");
+      if (tempStatus === "crit") {
+        // Критический перегрев - красный цвет
+        meshMap.engine?.forEach((m) => setMeshColor(m, COL3.crit));
+        meshMap.chimney?.forEach((m) => setMeshColor(m, COL3.crit));
+      } else if (tempStatus === "warn") {
+        // Предупреждение - желтый цвет
+        meshMap.engine?.forEach((m) => setMeshColor(m, COL3.warn));
+        meshMap.chimney?.forEach((m) => setMeshColor(m, COL3.warn));
+      } else {
+        // При нормальной температуре - все в нормальном цвете
+      }
+
       const tipTarget = selectedGroup || curHover;
       if (tipTarget) showTip(tipTarget);
     }
