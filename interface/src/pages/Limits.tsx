@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useThemeStore } from "../store/useThemeStore";
+import { api } from "../api/client";
 
 const LIMIT_GROUPS = [
   { key: "engine_temp", label: "Температура двигателя", unit: "°C" },
@@ -24,10 +25,10 @@ const LIMIT_GROUPS = [
 ];
 
 const LIMIT_SUFFIXES = [
-  { key: "warning_min", label: "Warning min" },
-  { key: "warning_max", label: "Warning max" },
-  { key: "critical_min", label: "Critical min" },
-  { key: "critical_max", label: "Critical max" },
+  { key: "warning_min", label: "Внимание мин" },
+  { key: "warning_max", label: "Внимание макс" },
+  { key: "critical_min", label: "Критич. мин" },
+  { key: "critical_max", label: "Критич. макс" },
 ];
 
 type LimitsPayload = Record<string, number | string | undefined>;
@@ -80,8 +81,7 @@ export function LimitsPage() {
     let active = true;
     setLoading(true);
     setError(null);
-    fetch(`/api/v1/locomotives/${locomotiveId}/limits`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Ошибка загрузки лимитов"))))
+    api.get<Record<string, any>>(`/api/v1/locomotives/${locomotiveId}/limits`)
       .then((data) => {
         if (!active) return;
         const nextForm: Record<string, string> = {};
@@ -139,15 +139,7 @@ export function LimitsPage() {
       if (!Number.isNaN(num)) payload[key] = num;
     });
 
-    fetch(`/api/v1/locomotives/${locomotiveId}/limits`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error("Не удалось сохранить лимиты");
-        return r.json();
-      })
+    api.put<any>(`/api/v1/locomotives/${locomotiveId}/limits`, payload)
       .then(() => {
         setRawLimits(payload);
         setSuccess("Лимиты успешно сохранены");

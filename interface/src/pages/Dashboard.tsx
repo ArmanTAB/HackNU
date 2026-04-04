@@ -8,6 +8,7 @@ import { AlertToasts } from "../components/AlertToasts";
 import { RightPanel } from "../components/RightPanel";
 import { BottomCharts } from "../components/BottomCharts";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { api } from "../api/client";
 
 const ROUTE_INFO: Record<
   string,
@@ -25,43 +26,43 @@ const ROUTE_INFO: Record<
   "1": {
     serial: "СЕР.0847",
     route: "А-07",
-    from: "Алматы",
-    to: "Астана",
+    from: "Астана",
+    to: "Алматы",
     distance: "1284 км",
-    driver: "Сейткали А.",
+    driver: "Тайшанов Т.",
     phone: "+7 701 222 33 44",
     path: [
-      [43.2389, 76.8897],
-      [46.9911, 71.6200],
       [51.1694, 71.4491],
+      [46.9911, 71.6200],
+      [43.2389, 76.8897],
     ],
   },
   "2": {
     serial: "СЕР.0312",
     route: "Б-03",
     from: "Астана",
-    to: "Актобе",
-    distance: "1132 км",
-    driver: "Муратов Б.",
+    to: "Алматы",
+    distance: "1284 км",
+    driver: "Кенес Д.",
     phone: "+7 702 111 22 33",
     path: [
       [51.1694, 71.4491],
-      [50.2830, 67.4500],
-      [50.2839, 57.1669],
+      [46.9911, 71.6200],
+      [43.2389, 76.8897],
     ],
   },
   "3": {
     serial: "СЕР.0521",
     route: "В-11",
-    from: "Шымкент",
-    to: "Кызылорда",
-    distance: "672 км",
-    driver: "Ахметов Д.",
+    from: "Астана",
+    to: "Алматы",
+    distance: "1284 км",
+    driver: "Танжарық А.",
     phone: "+7 705 888 77 66",
     path: [
-      [42.3417, 69.5901],
-      [43.8045, 66.5000],
-      [44.8488, 65.4823],
+      [51.1694, 71.4491],
+      [46.9911, 71.6200],
+      [43.2389, 76.8897],
     ],
   },
 };
@@ -89,14 +90,22 @@ export function Dashboard() {
   const replayWindow = useTelemetryStore((s) => s.replayWindow);
   const setHealthFactors = useTelemetryStore((s) => s.setHealthFactors);
   const setEvents = useTelemetryStore((s) => s.setEvents);
+  const setLimits = useTelemetryStore((s) => s.setLimits);
   const alerts = useTelemetryStore((s) => s.alerts);
 
   useTelemetryWS(String(wsId), "ws://localhost:8081/ws");
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/v1/locomotives/${wsId}/alerts?active=true`)
-      .then((r) => (r.ok ? r.json() : []))
+    api.get<any>(`/api/v1/locomotives/${wsId}/limits`)
+      .then((data) => { if (active && data) setLimits(data); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [wsId, setLimits]);
+
+  useEffect(() => {
+    let active = true;
+    api.get<any[]>(`/api/v1/locomotives/${wsId}/alerts?active=true`)
       .then((data) => {
         if (!active || !Array.isArray(data)) return;
         const mapped = mapApiAlerts(data);
@@ -118,8 +127,7 @@ export function Dashboard() {
       limit: String(replayWindow * 60),
     });
 
-    fetch(`/api/v1/locomotives/${wsId}/telemetry/history?${params.toString()}`)
-      .then((r) => (r.ok ? r.json() : []))
+    api.get<any[]>(`/api/v1/locomotives/${wsId}/telemetry/history?${params.toString()}`)
       .then((data) => {
         if (!active || !Array.isArray(data)) return;
           const mapped = data.map((d: any) => {
@@ -173,8 +181,7 @@ export function Dashboard() {
       to: to.toISOString(),
     });
 
-    fetch(`/api/v1/locomotives/${wsId}/health/history?${params.toString()}`)
-      .then((r) => (r.ok ? r.json() : []))
+    api.get<any[]>(`/api/v1/locomotives/${wsId}/health/history?${params.toString()}`)
       .then((data) => {
         if (!active || !Array.isArray(data) || data.length === 0) return;
         const latest = data
@@ -184,8 +191,7 @@ export function Dashboard() {
       })
       .catch(() => undefined);
 
-    fetch(`/api/v1/locomotives/${wsId}/events?${params.toString()}`)
-      .then((r) => (r.ok ? r.json() : []))
+    api.get<any[]>(`/api/v1/locomotives/${wsId}/events?${params.toString()}`)
       .then((data) => {
         if (!active || !Array.isArray(data)) return;
         setEvents(data);

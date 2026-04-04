@@ -53,28 +53,29 @@ html.limits-scroll #root {
 /* ── Topbar ── */
 .topbar {
   grid-column: 1/4;
-  background: var(--navy);
+  background: var(--bg2);
+  border-bottom: 1.5px solid var(--border);
   display: flex;
   align-items: center;
   padding: 0 24px;
   gap: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,.28);
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
   position: relative;
   z-index: 10;
 }
 
 .t-back {
-  background: rgba(255,255,255,.08);
-  border: 1.5px solid rgba(255,255,255,.15);
+  background: transparent;
+  border: 1.5px solid var(--border);
   border-radius: 8px;
   padding: 6px 14px;
   cursor: pointer;
   font-size: 16px;
-  color: rgba(255,255,255,.75);
-  transition: background .15s;
+  color: var(--text2);
+  transition: border-color .15s, color .15s;
   margin-right: 4px;
 }
-.t-back:hover { background: rgba(255,255,255,.15); }
+.t-back:hover { border-color: var(--cyan); color: var(--cyan); }
 
 .t-title {
   font-size: 15px;
@@ -88,42 +89,42 @@ html.limits-scroll #root {
 .t-divider {
   width: 1px;
   height: 28px;
-  background: rgba(255,255,255,.12);
+  background: var(--border);
   flex-shrink: 0;
 }
 
 .t-sub {
   font-size: 13px;
-  color: rgba(255,255,255,.55);
+  color: var(--text3);
   letter-spacing: .08em;
   white-space: nowrap;
 }
 
 .t-route {
   font-size: 13px;
-  color: rgba(255,255,255,.4);
+  color: var(--text3);
   letter-spacing: .06em;
   white-space: nowrap;
 }
 
 .t-driver {
   font-size: 13px;
-  color: rgba(255,255,255,.4);
+  color: var(--text3);
   white-space: nowrap;
 }
 
 .t-call {
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1.5px solid rgba(255,255,255,.2);
+  border: 1.5px solid var(--border);
   font-size: 13px;
-  color: rgba(255,255,255,.75);
+  color: var(--text2);
   text-decoration: none;
   font-weight: 600;
-  transition: background .15s;
+  transition: border-color .15s, color .15s;
   white-space: nowrap;
 }
-.t-call:hover { background: rgba(255,255,255,.1); }
+.t-call:hover { border-color: var(--cyan); color: var(--cyan); }
 
 .t-right {
   margin-left: auto;
@@ -135,21 +136,21 @@ html.limits-scroll #root {
 .t-action {
   padding: 8px 18px;
   border-radius: 8px;
-  border: 1.5px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08);
+  border: 1.5px solid var(--border);
+  background: transparent;
   font-size: 14px;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
+  color: var(--text2);
   cursor: pointer;
   letter-spacing: .06em;
-  transition: background .15s;
+  transition: border-color .15s, color .15s, background .15s;
 }
-.t-action:hover { background: rgba(255,255,255,.15); }
+.t-action:hover { border-color: var(--cyan); color: var(--cyan); }
 
 .t-clock {
   font-size: 15px;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
+  color: var(--text);
   letter-spacing: .06em;
   font-variant-numeric: tabular-nums;
 }
@@ -481,7 +482,10 @@ html.limits-scroll #root {
 .limits-content {
   flex: 1;
   overflow: auto;
-  padding: 28px 40px 40px;
+  padding: 28px 40px 48px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .limits-topbar {
@@ -492,21 +496,23 @@ html.limits-scroll #root {
   padding: 0 24px;
   background: var(--bg2);
   border-bottom: 1.5px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
 }
 
 .limits-back {
   background: transparent;
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 5px 13px;
   cursor: pointer;
   font-size: 16px;
   color: var(--text2);
+  transition: border-color .15s, color .15s;
 }
+.limits-back:hover { border-color: var(--cyan); color: var(--cyan); }
 
 .limits-title {
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: .12em;
   text-transform: uppercase;
   font-weight: 700;
@@ -516,6 +522,9 @@ html.limits-scroll #root {
 .limits-sub {
   font-size: 13px;
   color: var(--text3);
+  padding: 3px 10px;
+  background: var(--bg3);
+  border-radius: 20px;
 }
 
 .limits-right {
@@ -526,78 +535,91 @@ html.limits-scroll #root {
   background: transparent;
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 5px 12px;
   font-size: 16px;
   cursor: pointer;
   color: var(--text2);
+  transition: border-color .15s;
+}
+.limits-theme-btn:hover { border-color: var(--cyan); }
+
+.limits-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
-
 .limits-header-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
   color: var(--text);
 }
 
 .limits-header-sub {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text3);
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .limits-actions {
   display: flex;
-  gap: 10px;
-  margin: 16px 0 20px;
+  gap: 8px;
+  margin: 20px 0 18px;
 }
 
 .limits-btn {
-  padding: 8px 16px;
+  padding: 8px 20px;
   border-radius: 8px;
   border: 1.5px solid var(--border);
   background: var(--bg2);
   color: var(--text2);
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
+  transition: border-color .15s, color .15s, background .15s;
 }
+.limits-btn:hover:not(:disabled) { border-color: var(--text3); color: var(--text); }
 
 .limits-btn--primary {
   background: var(--cyan);
   color: #fff;
   border-color: transparent;
 }
+.limits-btn--primary:hover:not(:disabled) { background: #0284c7; }
 
 .limits-btn:disabled {
-  opacity: .6;
+  opacity: .45;
   cursor: not-allowed;
 }
 
 .limits-error {
-  background: rgba(220,38,38,.08);
-  border: 1px solid rgba(220,38,38,.3);
+  background: rgba(220,38,38,.07);
+  border: 1px solid rgba(220,38,38,.25);
   color: var(--crit);
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   margin-top: 12px;
+  font-size: 13px;
 }
 
 .limits-success {
-  background: rgba(22,163,74,.08);
-  border: 1px solid rgba(22,163,74,.3);
+  background: rgba(22,163,74,.07);
+  border: 1px solid rgba(22,163,74,.25);
   color: var(--ok);
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   margin-top: 12px;
+  font-size: 13px;
 }
 
 .limits-notice {
   margin-top: 12px;
-  background: rgba(14,165,233,.08);
-  border: 1px solid rgba(14,165,233,.3);
+  background: rgba(14,165,233,.07);
+  border: 1px solid rgba(14,165,233,.25);
   border-radius: 10px;
-  padding: 12px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -606,7 +628,7 @@ html.limits-scroll #root {
 
 .limits-notice-text {
   color: var(--text2);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .limits-notice-actions {
@@ -616,57 +638,98 @@ html.limits-scroll #root {
 }
 
 .limits-loading {
-  padding: 16px 0;
+  padding: 24px 0;
   color: var(--text3);
+  font-size: 14px;
 }
 
 .limits-grid {
   background: var(--bg2);
   border: 1.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+/* column-group tints in header */
+.limits-row--head > :nth-child(2),
+.limits-row--head > :nth-child(3) {
+  color: #b45309;
+}
+.limits-row--head > :nth-child(4),
+.limits-row--head > :nth-child(5) {
+  color: #b91c1c;
 }
 
 .limits-row {
   display: grid;
-  grid-template-columns: 1.6fr repeat(4, 1fr);
-  gap: 12px;
-  padding: 12px 16px;
+  grid-template-columns: 1.8fr repeat(4, 1fr);
+  gap: 10px;
+  padding: 11px 18px;
   align-items: center;
   border-bottom: 1px solid var(--border);
+  transition: background .12s;
 }
+.limits-row:not(.limits-row--head):hover { background: var(--bg3); }
 
 .limits-row--head {
   background: var(--bg3);
-  font-size: 12px;
-  letter-spacing: .12em;
+  font-size: 11px;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--text3);
   font-weight: 700;
+  padding-top: 13px;
+  padding-bottom: 13px;
 }
 
 .limits-row:last-child { border-bottom: none; }
 
 .limits-param-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text);
 }
 
 .limits-param-unit {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text3);
-  margin-top: 2px;
+  margin-top: 3px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
+
+.limits-cell { position: relative; }
 
 .limits-input {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 10px;
   font-size: 13px;
   color: var(--text);
-  background: var(--bg2);
+  background: var(--bg);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  font-family: inherit;
+}
+.limits-input:hover { border-color: var(--border2); }
+.limits-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
+.limits-input::placeholder { color: var(--text3); }
+
+/* warn columns (2 & 3) focus tint */
+.limits-row > :nth-child(2) .limits-input:focus,
+.limits-row > :nth-child(3) .limits-input:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217,119,6,.12);
+}
+
+/* crit columns (4 & 5) focus tint */
+.limits-row > :nth-child(4) .limits-input:focus,
+.limits-row > :nth-child(5) .limits-input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.1);
 }
 
 @media (max-width: 1100px) {
@@ -901,8 +964,20 @@ html.limits-scroll #root {
   box-shadow: 0 4px 20px rgba(0,0,0,.35);
 }
 
-html.map-modal-open .time-scrubber {
+html.map-modal-open .cw .time-scrubber {
   display: none;
+}
+
+.route-map-modal-card .time-scrubber {
+  position: static;
+  transform: none;
+  width: 100%;
+  min-width: unset;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: none;
 }
 
 .time-window {
@@ -1567,8 +1642,21 @@ html.dark {
 
 html.dark .topbar {
   background: var(--navy);
+  border-bottom-color: transparent;
   box-shadow: 0 2px 16px rgba(0,0,0,.5);
 }
+html.dark .t-back     { border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.7); }
+html.dark .t-back:hover { border-color: var(--cyan); color: var(--cyan); }
+html.dark .t-title    { color: var(--cyan); }
+html.dark .t-sub,
+html.dark .t-route,
+html.dark .t-driver   { color: rgba(255,255,255,.45); }
+html.dark .t-divider  { background: rgba(255,255,255,.12); }
+html.dark .t-call     { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.7); }
+html.dark .t-call:hover { border-color: var(--cyan); color: var(--cyan); }
+html.dark .t-action   { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.8); }
+html.dark .t-action:hover { border-color: var(--cyan); color: var(--cyan); }
+html.dark .t-clock    { color: rgba(255,255,255,.85); }
 
 html.dark .bottom {
   background: var(--bg2);

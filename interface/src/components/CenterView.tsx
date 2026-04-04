@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
 import { useThemeStore } from "../store/useThemeStore";
+import { useTelemetryStore } from "../store/useTelemetryStore";
 import { TimeScrubber } from "./TimeScrubber";
 
 const THEME = {
@@ -12,6 +13,9 @@ export function CenterView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frame = useDisplayFrame();
   const dark = useThemeStore((s) => s.dark);
+  const limits = useTelemetryStore((s) => s.limits);
+  const limitsRef = useRef(limits);
+  limitsRef.current = limits;
   const speed = frame?.speed ?? 0;
   const displaySpeed = Math.round(speed);
   const score = frame?.health_score ?? 100;
@@ -22,6 +26,11 @@ export function CenterView() {
     const update = (window as any).__updateTelemetry;
     if (update) update(frame);
   }, [frame]);
+
+  useEffect(() => {
+    const update = (window as any).__updateLimits;
+    if (update) update(limits);
+  }, [limits]);
 
   // обновляем тему сцены без пересоздания Three.js
   useEffect(() => {
@@ -275,16 +284,17 @@ export function CenterView() {
       select: new THREE.Color(0x0ea5e9),
     };
 
+    const L = limitsRef.current;
     const S = {
-      temp: { val: frame?.engine_temp ?? 0, unit: "°C", ok: [0, 105], warn: [105, 135] },
-      oil: { val: frame?.oil_pressure ?? 0, unit: " бар", ok: [3.5, 8], warn: [2, 3.5] },
-      speed: { val: frame?.speed ?? 0, unit: " км/ч", ok: [0, 120], warn: [120, 140] },
-      fuel: { val: frame?.fuel_level ?? 0, unit: "%", ok: [15, 100], warn: [5, 15] },
-      volt: { val: frame?.voltage ?? 0, unit: " В", ok: [600, 750], warn: [550, 600] },
-      rpm: { val: frame?.rpm ?? 0, unit: " об/м", ok: [0, 1600], warn: [1600, 1900] },
-      traction: { val: frame?.traction ?? 0, unit: " кН", ok: [0, 400], warn: [400, 500] },
-      curr: { val: frame?.current ?? 0, unit: " А", ok: [0, 2000], warn: [2000, 2400] },
-      cons: { val: frame?.fuel_rate ?? 0, unit: " л/ч", ok: [0, 80], warn: [80, 100] },
+      temp:     { val: frame?.engine_temp ?? 0,  unit: "°C",   ok: [0,   L.engine_temp_warning_max    ?? 105], warn: [L.engine_temp_warning_max    ?? 105, L.engine_temp_critical_max    ?? 135] },
+      oil:      { val: frame?.oil_pressure ?? 0, unit: " бар", ok: [L.oil_pressure_warning_min  ?? 3.5, L.oil_pressure_warning_max  ?? 8],   warn: [L.oil_pressure_critical_min  ?? 2,   L.oil_pressure_warning_min  ?? 3.5] },
+      speed:    { val: frame?.speed ?? 0,        unit: " км/ч",ok: [0,   L.speed_warning_max           ?? 120], warn: [L.speed_warning_max           ?? 120, L.speed_critical_max           ?? 140] },
+      fuel:     { val: frame?.fuel_level ?? 0,   unit: "%",    ok: [L.fuel_level_warning_min    ?? 15,  100],  warn: [L.fuel_level_critical_min    ?? 5,   L.fuel_level_warning_min    ?? 15] },
+      volt:     { val: frame?.voltage ?? 0,      unit: " В",   ok: [L.traction_voltage_warning_min ?? 600, L.traction_voltage_warning_max ?? 750], warn: [L.traction_voltage_critical_min ?? 550, L.traction_voltage_warning_min ?? 600] },
+      rpm:      { val: frame?.rpm ?? 0,          unit: " об/м",ok: [0,   L.engine_rpm_warning_max       ?? 1600],warn: [L.engine_rpm_warning_max       ?? 1600, L.engine_rpm_critical_max       ?? 1900] },
+      traction: { val: frame?.traction ?? 0,     unit: " кН",  ok: [0,   L.traction_force_warning_max   ?? 400], warn: [L.traction_force_warning_max   ?? 400,  L.traction_force_critical_max   ?? 500] },
+      curr:     { val: frame?.current ?? 0,      unit: " А",   ok: [0,   L.traction_current_warning_max ?? 2000],warn: [L.traction_current_warning_max ?? 2000, L.traction_current_critical_max ?? 2400] },
+      cons:     { val: frame?.fuel_rate ?? 0,    unit: " л/ч", ok: [0,   L.fuel_consumption_warning_max ?? 80],  warn: [L.fuel_consumption_warning_max ?? 80,   L.fuel_consumption_critical_max ?? 100] },
     };
 
     function st(k: keyof typeof S) {
@@ -358,26 +368,26 @@ export function CenterView() {
       engine: {
         name: "Дизельный двигатель",
         params: () => [
-          { k: "temp", l: "Температура", v: `${S.temp.val}°C` },
-          { k: "rpm", l: "Обороты", v: `${S.rpm.val} об/м` },
-          { k: "cons", l: "Расход топлива", v: `${S.cons.val} л/ч` },
+          { k: "temp", l: "Температура", v: `${Math.round(S.temp.val)}°C` },
+          { k: "rpm", l: "Обороты", v: `${Math.round(S.rpm.val)} об/м` },
+          { k: "cons", l: "Расход топлива", v: `${Math.round(S.cons.val)} л/ч` },
         ],
         msg: () => {
           const ts = st("temp");
           const rs = st("rpm");
           if (ts === "crit")
-            return `Критический перегрев: ${S.temp.val}°C. Требуется остановка и осмотр системы охлаждения.`;
+            return `Критический перегрев: ${Math.round(S.temp.val)}°C. Требуется остановка и осмотр системы охлаждения.`;
           if (ts === "warn")
-            return `Температура двигателя повышена до ${S.temp.val}°C. Снизьте нагрузку.`;
+            return `Температура двигателя повышена до ${Math.round(S.temp.val)}°C. Снизьте нагрузку.`;
           if (rs === "crit")
-            return `Обороты ${S.rpm.val} об/м критически высокие. Риск повреждения.`;
-          if (rs === "warn") return `Обороты ${S.rpm.val} об/м близки к максимуму.`;
+            return `Обороты ${Math.round(S.rpm.val)} об/м критически высокие (макс. ${Math.round(S.rpm.warn[1])}). Риск повреждения.`;
+          if (rs === "warn") return `Обороты ${Math.round(S.rpm.val)} об/м близки к максимуму (${Math.round(S.rpm.ok[1])} об/м).`;
           return "Двигатель работает штатно. Все параметры в норме.";
         },
       },
       chimney: {
         name: "Выхлопная система",
-        params: () => [{ k: "rpm", l: "Нагрузка (об/м)", v: `${S.rpm.val} об/м` }],
+        params: () => [{ k: "rpm", l: "Нагрузка (об/м)", v: `${Math.round(S.rpm.val)} об/м` }],
         msg: () => {
           const rs = st("rpm");
           if (rs === "crit") return "Сильная задымленность. Требуется диагностика.";
@@ -387,34 +397,34 @@ export function CenterView() {
       },
       wheels: {
         name: "Колесные пары",
-        params: () => [{ k: "speed", l: "Скорость", v: `${S.speed.val} км/ч` }],
+        params: () => [{ k: "speed", l: "Скорость", v: `${Math.round(S.speed.val)} км/ч` }],
         msg: () => {
           const ss = st("speed");
           if (ss === "crit")
-            return `Скорость ${S.speed.val} км/ч превышает лимит. Риск схода с рельс.`;
+            return `Скорость ${Math.round(S.speed.val)} км/ч превышает лимит (макс. ${Math.round(S.speed.warn[1])} км/ч). Риск схода с рельс.`;
           if (ss === "warn")
-            return `Скорость ${S.speed.val} км/ч близка к максимальной.`;
+            return `Скорость ${Math.round(S.speed.val)} км/ч близка к максимальной (${Math.round(S.speed.ok[1])} км/ч).`;
           return "Колесные пары в норме.";
         },
       },
       bogie: {
         name: "Тележки / ходовая часть",
         params: () => [
-          { k: "oil", l: "Давление масла", v: `${S.oil.val} бар` },
-          { k: "traction", l: "Тяговое усилие", v: `${S.traction.val} кН` },
+          { k: "oil", l: "Давление масла", v: `${S.oil.val.toFixed(1)} бар` },
+          { k: "traction", l: "Тяговое усилие", v: `${Math.round(S.traction.val)} кН` },
         ],
         msg: () => {
           const os = st("oil");
           if (os === "crit")
-            return `Давление масла ${S.oil.val} бар критически низкое. Немедленная остановка.`;
+            return `Давление масла ${S.oil.val.toFixed(1)} бар критически низкое. Немедленная остановка.`;
           if (os === "warn")
-            return `Давление масла ${S.oil.val} бар снижено. Проверьте маслосистему.`;
+            return `Давление масла ${S.oil.val.toFixed(1)} бар снижено. Проверьте маслосистему.`;
           return "Ходовая часть в норме.";
         },
       },
       body: {
         name: "Кузов / вентиляция",
-        params: () => [{ k: "temp", l: "Темп. в отсеке", v: `${S.temp.val}°C` }],
+        params: () => [{ k: "temp", l: "Темп. в отсеке", v: `${Math.round(S.temp.val)}°C` }],
         msg: () => {
           const ts = st("temp");
           if (ts === "crit") return "Перегрев отсека. Проверьте вентиляционные решетки.";
@@ -425,32 +435,32 @@ export function CenterView() {
       fuel: {
         name: "Топливная система",
         params: () => [
-          { k: "fuel", l: "Уровень топлива", v: `${S.fuel.val}%` },
-          { k: "cons", l: "Расход", v: `${S.cons.val} л/ч` },
+          { k: "fuel", l: "Уровень топлива", v: `${Math.round(S.fuel.val)}%` },
+          { k: "cons", l: "Расход", v: `${Math.round(S.cons.val)} л/ч` },
         ],
         msg: () => {
           const fs = st("fuel");
           const eta = S.cons.val > 0 ? Math.round((S.fuel.val * 60) / S.cons.val) : 999;
           if (fs === "crit")
-            return `Топливо ${S.fuel.val}%. Аварийный запас. До остановки примерно ${eta} мин.`;
+            return `Топливо ${Math.round(S.fuel.val)}%. Аварийный запас. До остановки примерно ${eta} мин.`;
           if (fs === "warn")
-            return `Топливо ${S.fuel.val}%. До опасной зоны примерно ${eta} мин.`;
+            return `Топливо ${Math.round(S.fuel.val)}%. До опасной зоны примерно ${eta} мин.`;
           return "Топливная система в норме. Запас хода достаточный.";
         },
       },
       roof: {
-        name: "Крыша / электрооборудование",
+        name: "Электрооборудование",
         params: () => [
-          { k: "volt", l: "Напряжение", v: `${S.volt.val} В` },
-          { k: "curr", l: "Ток тяги", v: `${S.curr.val} А` },
+          { k: "volt", l: "Напряжение", v: `${Math.round(S.volt.val)} В` },
+          { k: "curr", l: "Ток тяги", v: `${Math.round(S.curr.val)} А` },
         ],
         msg: () => {
           const vs = st("volt");
           const cs = st("curr");
           if (vs === "crit")
-            return `Напряжение ${S.volt.val} В вне нормы (600–750 В). Риск повреждения оборудования.`;
-          if (vs === "warn") return `Нестабильное напряжение ${S.volt.val} В.`;
-          if (cs === "crit") return `Ток тяги ${S.curr.val} А превышает норму.`;
+            return `Напряжение ${Math.round(S.volt.val)} В вне нормы (${Math.round(S.volt.ok[0])}–${Math.round(S.volt.ok[1])} В). Риск повреждения оборудования.`;
+          if (vs === "warn") return `Нестабильное напряжение ${Math.round(S.volt.val)} В. Норма: ${Math.round(S.volt.ok[0])}–${Math.round(S.volt.ok[1])} В.`;
+          if (cs === "crit") return `Ток тяги ${Math.round(S.curr.val)} А превышает норму (макс. ${Math.round(S.curr.ok[1])} А).`;
           return "Электрооборудование работает штатно.";
         },
       },
@@ -636,6 +646,40 @@ export function CenterView() {
       applyAll();
     };
 
+    (window as any).__updateLimits = (L: any) => {
+      if (!L) return;
+      // temp
+      if (L.engine_temp_warning_max != null)      { S.temp.ok[1]   = L.engine_temp_warning_max;    S.temp.warn[0] = L.engine_temp_warning_max; }
+      if (L.engine_temp_critical_max != null)     { S.temp.warn[1] = L.engine_temp_critical_max; }
+      // oil (low-side threshold)
+      if (L.oil_pressure_warning_min != null)     { S.oil.ok[0]    = L.oil_pressure_warning_min;   S.oil.warn[1]  = L.oil_pressure_warning_min; }
+      if (L.oil_pressure_warning_max != null)     { S.oil.ok[1]    = L.oil_pressure_warning_max; }
+      if (L.oil_pressure_critical_min != null)    { S.oil.warn[0]  = L.oil_pressure_critical_min; }
+      // speed
+      if (L.speed_warning_max != null)            { S.speed.ok[1]  = L.speed_warning_max;          S.speed.warn[0] = L.speed_warning_max; }
+      if (L.speed_critical_max != null)           { S.speed.warn[1]= L.speed_critical_max; }
+      // fuel (low-side)
+      if (L.fuel_level_warning_min != null)       { S.fuel.ok[0]   = L.fuel_level_warning_min;     S.fuel.warn[1] = L.fuel_level_warning_min; }
+      if (L.fuel_level_critical_min != null)      { S.fuel.warn[0] = L.fuel_level_critical_min; }
+      // voltage
+      if (L.traction_voltage_warning_min != null) { S.volt.ok[0]   = L.traction_voltage_warning_min; S.volt.warn[1] = L.traction_voltage_warning_min; }
+      if (L.traction_voltage_warning_max != null) { S.volt.ok[1]   = L.traction_voltage_warning_max; }
+      if (L.traction_voltage_critical_min != null){ S.volt.warn[0] = L.traction_voltage_critical_min; }
+      // rpm
+      if (L.engine_rpm_warning_max != null)       { S.rpm.ok[1]    = L.engine_rpm_warning_max;     S.rpm.warn[0]  = L.engine_rpm_warning_max; }
+      if (L.engine_rpm_critical_max != null)      { S.rpm.warn[1]  = L.engine_rpm_critical_max; }
+      // traction force
+      if (L.traction_force_warning_max != null)   { S.traction.ok[1]   = L.traction_force_warning_max;  S.traction.warn[0] = L.traction_force_warning_max; }
+      if (L.traction_force_critical_max != null)  { S.traction.warn[1] = L.traction_force_critical_max; }
+      // current
+      if (L.traction_current_warning_max != null) { S.curr.ok[1]   = L.traction_current_warning_max;  S.curr.warn[0] = L.traction_current_warning_max; }
+      if (L.traction_current_critical_max != null){ S.curr.warn[1] = L.traction_current_critical_max; }
+      // fuel consumption
+      if (L.fuel_consumption_warning_max != null) { S.cons.ok[1]   = L.fuel_consumption_warning_max;  S.cons.warn[0] = L.fuel_consumption_warning_max; }
+      if (L.fuel_consumption_critical_max != null){ S.cons.warn[1] = L.fuel_consumption_critical_max; }
+      applyAll();
+    };
+
     // Raycast
     const ray = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -739,7 +783,6 @@ export function CenterView() {
         <div className="speed-unit">КМ / ЧАС</div>
       </div>
       <canvas ref={canvasRef} id="cv" />
-      <TimeScrubber />
     </div>
   );
 }
