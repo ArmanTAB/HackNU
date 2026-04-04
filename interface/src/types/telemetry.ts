@@ -23,6 +23,17 @@ export interface TelemetryFrame {
   health_score: number; // 0–100 (считает бэк)
   health_status: "normal" | "warning" | "critical";
   alerts: Alert[];
+  gps_lat?: number;
+  gps_lon?: number;
+  wheel_slip?: number;
+  oil_temp?: number;
+  pantograph_voltage?: number;
+  inverter_temp?: number;
+  battery_voltage?: number;
+  brake_pipe_pressure?: number;
+  brake_cylinder_pressure?: number;
+  main_reservoir_pressure?: number;
+  ambient_temp?: number;
 }
 
 export interface HistoryPoint {

@@ -6,6 +6,7 @@ export function CenterView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frame = useDisplayFrame();
   const speed = frame?.speed ?? 0;
+  const displaySpeed = Math.round(speed);
   const score = frame?.health_score ?? 100;
   const speedColor =
     score > 70 ? "var(--ok)" : score > 40 ? "var(--warn)" : "var(--crit)";
@@ -706,7 +707,7 @@ export function CenterView() {
       <div className="tooltip" id="tip" />
       <div className="speed-hud">
         <div className="speed-big" style={{ color: speedColor }}>
-          {speed}
+          {displaySpeed}
         </div>
         <div className="speed-unit">КМ / ЧАС</div>
       </div>

@@ -109,7 +109,7 @@ export function BottomCharts() {
   const getValue = (key: keyof HistoryPoint) => {
     if (!frame) return "—";
     const v = frame[key as keyof typeof frame];
-    return v !== undefined ? String(v) : "—";
+    return v !== undefined ? String(Math.round(v as number)) : "—";
   };
 
   return (
