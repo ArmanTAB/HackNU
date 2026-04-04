@@ -49,6 +49,7 @@ func New(cfg *config.Config) (*App, error) {
 	alertRepo := infrepo.NewAlertPg(pool)
 	eventRepo := infrepo.NewEventPg(pool)
 	healthRepo := infrepo.NewHealthPg(pool)
+	userRepo := infrepo.NewUserPg(pool)
 
 	// Services
 	locoSvc := service.NewLocomotiveService(locoRepo)
@@ -57,6 +58,7 @@ func New(cfg *config.Config) (*App, error) {
 	eventSvc := service.NewEventService(eventRepo)
 	healthSvc := service.NewHealthService(healthRepo)
 	exportSvc := service.NewExportService(telRepo)
+	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpiry)
 
 	// WebSocket hub
 	hub := infws.NewHub()
@@ -78,7 +80,7 @@ func New(cfg *config.Config) (*App, error) {
 	)
 
 	// HTTP router
-	router := transphttp.NewRouter(pool, hub, locoSvc, telSvc, alertSvc, eventSvc, healthSvc, exportSvc)
+	router := transphttp.NewRouter(pool, hub, locoSvc, telSvc, alertSvc, eventSvc, healthSvc, exportSvc, authSvc)
 
 	var sim *simulator.Simulator
 	if cfg.SimulatorEnabled {

@@ -20,6 +20,9 @@ type Config struct {
 	SimulatorLocomotiveIDs []int
 	SimulatorHz            int
 	SimulatorEnabled       bool
+
+	JWTSecret string
+	JWTExpiry int
 }
 
 func Load() (*Config, error) {
@@ -34,6 +37,8 @@ func Load() (*Config, error) {
 		HealthSnapshotInterval: getEnvInt("HEALTH_SNAPSHOT_INTERVAL", 5),
 		SimulatorHz:            getEnvInt("SIMULATOR_HZ", 1),
 		SimulatorEnabled:       getEnvBool("SIMULATOR_ENABLED", false),
+		JWTSecret:              getEnv("JWT_SECRET", "jwt-secret"),
+		JWTExpiry:              getEnvInt("JWT_EXPIRY_HOURS", 720),
 	}
 
 	brokersRaw := getEnv("KAFKA_BROKERS", "localhost:9092")

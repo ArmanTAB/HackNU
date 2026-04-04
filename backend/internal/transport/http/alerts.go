@@ -18,6 +18,7 @@ import (
 // @Success      200       {array}   domain.Alert
 // @Failure      400       {object}  map[string]string
 // @Failure      500       {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/alerts [get]
 func (r *Router) getAlerts(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -50,6 +51,7 @@ func (r *Router) getAlerts(c *fiber.Ctx) error {
 // @Success      200       {object}  map[string]bool
 // @Failure      400       {object}  map[string]string
 // @Failure      500       {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/alerts/{alert_id}/acknowledge [post]
 func (r *Router) acknowledgeAlert(c *fiber.Ctx) error {
 	alertID, err := strconv.ParseInt(c.Params("alert_id"), 10, 64)

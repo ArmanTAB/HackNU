@@ -5,6 +5,11 @@
 // @BasePath        /api/v1
 // @schemes         http
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter: Bearer {token}
+
 package main
 
 import (

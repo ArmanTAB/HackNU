@@ -18,6 +18,7 @@ import (
 // @Success      200   {array}   domain.Event
 // @Failure      400   {object}  map[string]string
 // @Failure      500   {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/events [get]
 func (r *Router) getEvents(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -51,6 +52,7 @@ func (r *Router) getEvents(c *fiber.Ctx) error {
 // @Success      201    {object}  domain.Event
 // @Failure      400    {object}  map[string]string
 // @Failure      500    {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/events [post]
 func (r *Router) createEvent(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))

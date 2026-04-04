@@ -15,8 +15,117 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticates a user and returns a JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login and password",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Creates a new user account and returns a JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Login and password",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Login already taken",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/healthz": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns 200 if DB is reachable, 503 otherwise",
                 "produces": [
                     "application/json"
@@ -49,6 +158,11 @@ const docTemplate = `{
         },
         "/locomotives": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns all locomotives with their current status",
                 "produces": [
                     "application/json"
@@ -81,6 +195,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns a single locomotive by its ID",
                 "produces": [
                     "application/json"
@@ -128,6 +247,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/alerts": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns alerts for a locomotive. Filter by active status and/or severity.",
                 "produces": [
                     "application/json"
@@ -190,6 +314,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/alerts/{alert_id}/acknowledge": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Marks an alert as acknowledged by the dispatcher",
                 "consumes": [
                     "application/json"
@@ -263,6 +392,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/events": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns manual events (incidents, maintenance notes) for a locomotive",
                 "produces": [
                     "application/json"
@@ -323,6 +457,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Records a manual event (incident, maintenance, note) for a locomotive",
                 "consumes": [
                     "application/json"
@@ -382,6 +521,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/export/csv": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Downloads a CSV file containing historical telemetry for a locomotive",
                 "produces": [
                     "text/csv"
@@ -441,6 +585,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/health/history": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns health snapshot history for a locomotive, downsampled to 1 point per minute",
                 "produces": [
                     "application/json"
@@ -503,6 +652,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/limits": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns all warning and critical thresholds configured for a locomotive",
                 "produces": [
                     "application/json"
@@ -548,6 +702,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Updates warning and critical thresholds for a locomotive (takes effect immediately)",
                 "consumes": [
                     "application/json"
@@ -610,6 +769,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/telemetry/current": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns the latest telemetry snapshot for a locomotive",
                 "produces": [
                     "application/json"
@@ -657,6 +821,11 @@ const docTemplate = `{
         },
         "/locomotives/{id}/telemetry/history": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns historical telemetry records for a locomotive within a time range",
                 "produces": [
                     "application/json"
@@ -767,6 +936,14 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.Event": {
             "type": "object",
             "properties": {
@@ -849,6 +1026,28 @@ const docTemplate = `{
                 },
                 "year_built": {
                     "type": "integer"
+                }
+            }
+        },
+        "domain.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
                 }
             }
         },
@@ -1260,6 +1459,14 @@ const docTemplate = `{
                     "type": "number"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Enter: Bearer {token}",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

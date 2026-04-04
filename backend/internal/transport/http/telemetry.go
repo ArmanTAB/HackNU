@@ -17,6 +17,7 @@ import (
 // @Success      200  {object}  domain.Telemetry
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/telemetry/current [get]
 func (r *Router) getCurrentTelemetry(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -42,6 +43,7 @@ func (r *Router) getCurrentTelemetry(c *fiber.Ctx) error {
 // @Success      200    {array}   domain.Telemetry
 // @Failure      400    {object}  map[string]string
 // @Failure      500    {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/telemetry/history [get]
 func (r *Router) getHistoryTelemetry(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -73,6 +75,7 @@ func (r *Router) getHistoryTelemetry(c *fiber.Ctx) error {
 // @Success      200  {object}  domain.TelemetryLimits
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/limits [get]
 func (r *Router) getLimits(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -97,6 +100,7 @@ func (r *Router) getLimits(c *fiber.Ctx) error {
 // @Success      200     {object}  map[string]bool
 // @Failure      400     {object}  map[string]string
 // @Failure      500     {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/limits [put]
 func (r *Router) updateLimits(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -127,6 +131,7 @@ func (r *Router) updateLimits(c *fiber.Ctx) error {
 // @Success      200   {array}   domain.HealthSnapshot
 // @Failure      400   {object}  map[string]string
 // @Failure      500   {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/health/history [get]
 func (r *Router) getHealthHistory(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))

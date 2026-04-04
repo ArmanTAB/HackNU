@@ -14,6 +14,7 @@ import (
 // @Produce      json
 // @Success      200  {array}   domain.Locomotive
 // @Failure      500  {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives [get]
 func (r *Router) listLocomotives(c *fiber.Ctx) error {
 	locos, err := r.locoSvc.GetAll(c.Context())
@@ -35,6 +36,7 @@ func (r *Router) listLocomotives(c *fiber.Ctx) error {
 // @Success      200  {object}  domain.Locomotive
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id} [get]
 func (r *Router) getLocomotive(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))

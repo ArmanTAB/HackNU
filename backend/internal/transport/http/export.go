@@ -18,6 +18,7 @@ import (
 // @Success      200   {string}  string  "CSV file"
 // @Failure      400   {object}  map[string]string
 // @Failure      500   {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /locomotives/{id}/export/csv [get]
 func (r *Router) exportCSV(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))

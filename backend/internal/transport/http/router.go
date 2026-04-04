@@ -13,15 +13,17 @@ import (
 )
 
 type Router struct {
-	app       *fiber.App
-	db        *pgxpool.Pool
-	hub       *infraws.Hub
-	locoSvc   *service.LocomotiveService
-	telSvc    *service.TelemetryService
-	alertSvc  *service.AlertService
-	eventSvc  *service.EventService
-	healthSvc *service.HealthService
-	exportSvc *service.ExportService
+	app         *fiber.App
+	db          *pgxpool.Pool
+	hub         *infraws.Hub
+	locoSvc     *service.LocomotiveService
+	telSvc      *service.TelemetryService
+	alertSvc    *service.AlertService
+	eventSvc    *service.EventService
+	healthSvc   *service.HealthService
+	exportSvc   *service.ExportService
+	authSvc     *service.AuthService
+	authHandler *AuthHandler
 }
 
 func NewRouter(
@@ -33,17 +35,20 @@ func NewRouter(
 	eventSvc *service.EventService,
 	healthSvc *service.HealthService,
 	exportSvc *service.ExportService,
+	authSvc *service.AuthService,
 ) *Router {
 	return &Router{
-		app:       fiber.New(fiber.Config{AppName: "Locomotive Twin"}),
-		db:        db,
-		hub:       hub,
-		locoSvc:   locoSvc,
-		telSvc:    telSvc,
-		alertSvc:  alertSvc,
-		eventSvc:  eventSvc,
-		healthSvc: healthSvc,
-		exportSvc: exportSvc,
+		app:         fiber.New(fiber.Config{AppName: "Locomotive Twin"}),
+		db:          db,
+		hub:         hub,
+		locoSvc:     locoSvc,
+		telSvc:      telSvc,
+		alertSvc:    alertSvc,
+		eventSvc:    eventSvc,
+		healthSvc:   healthSvc,
+		exportSvc:   exportSvc,
+		authSvc:     authSvc,
+		authHandler: NewAuthHandler(authSvc),
 	}
 }
 
@@ -52,8 +57,16 @@ func (r *Router) Setup() *fiber.App {
 	r.app.Use(logger.New())
 	r.app.Use(cors.New(cors.Config{AllowOrigins: "*"}))
 
-	// Swagger UI
+	// Swagger UI (public)
 	r.app.Get("/swagger/*", fiberSwagger.HandlerDefault)
+
+	// Auth endpoints (public — registered before JWT middleware)
+	auth := r.app.Group("/api/v1/auth")
+	auth.Post("/register", r.authHandler.Register)
+	auth.Post("/login", r.authHandler.Login)
+
+	// All remaining routes require a valid JWT
+	r.app.Use(JWTMiddleware(r.authSvc))
 
 	// Healthz
 	r.app.Get("/healthz", r.healthz)
@@ -125,6 +138,7 @@ func (r *Router) handleWS(c *websocket.Conn) {
 // @Produce      json
 // @Success      200  {object}  map[string]string
 // @Failure      503  {object}  map[string]string
+// @Security     BearerAuth
 // @Router       /healthz [get]
 func (r *Router) healthz(c *fiber.Ctx) error {
 	if err := r.db.Ping(c.Context()); err != nil {

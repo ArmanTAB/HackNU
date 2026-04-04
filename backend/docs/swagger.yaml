@@ -28,6 +28,11 @@ definitions:
       value:
         type: number
     type: object
+  domain.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
   domain.Event:
     properties:
       created_by:
@@ -84,6 +89,20 @@ definitions:
         type: string
       year_built:
         type: integer
+    type: object
+  domain.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  domain.RegisterRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
     type: object
   domain.Telemetry:
     properties:
@@ -364,6 +383,74 @@ info:
   title: Locomotive Digital Twin API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: Login and password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account and returns a JWT token
+      parameters:
+      - description: Login and password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Login already taken
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
   /healthz:
     get:
       description: Returns 200 if DB is reachable, 503 otherwise
@@ -382,6 +469,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Health check
       tags:
       - system
@@ -403,6 +492,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: List all locomotives
       tags:
       - locomotives
@@ -434,6 +525,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get locomotive by ID
       tags:
       - locomotives
@@ -476,6 +569,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: List alerts
       tags:
       - alerts
@@ -524,6 +619,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Acknowledge an alert
       tags:
       - alerts
@@ -565,6 +662,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: List events
       tags:
       - events
@@ -603,6 +702,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create manual event
       tags:
       - events
@@ -642,6 +743,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Export telemetry as CSV
       tags:
       - export
@@ -684,6 +787,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get health score history
       tags:
       - health
@@ -715,6 +820,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get telemetry limits
       tags:
       - telemetry
@@ -756,6 +863,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Update telemetry limits
       tags:
       - telemetry
@@ -787,6 +896,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get current telemetry
       tags:
       - telemetry
@@ -833,9 +944,17 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get telemetry history
       tags:
       - telemetry
 schemes:
 - http
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
