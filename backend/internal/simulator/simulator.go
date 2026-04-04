@@ -131,14 +131,14 @@ func initialState(id int) *locoState {
 	}
 	return &locoState{
 		locomotiveID:          id,
-		speed:                 p.baselineSpeed + randn(5),
+		speed:                 p.baselineSpeed + randIntDelta3(),
 		tractionForce:         200.0 + rand.Float64()*50,
 		wheelSlip:             0.5 + rand.Float64()*1.0,
-		engineRpm:             p.baselineEngineRpm + randn(50),
-		engineTemp:            p.baselineEngineTemp + randn(3),
-		oilPressure:           p.baselineOilPressure + randn(0.2),
+		engineRpm:             p.baselineEngineRpm + randIntDelta3(),
+		engineTemp:            p.baselineEngineTemp + randIntDelta3(),
+		oilPressure:           p.baselineOilPressure + randIntDelta3(),
 		oilTemp:               75 + rand.Float64()*10,
-		fuelLevel:             p.baselineFuelLevel + randn(2),
+		fuelLevel:             p.baselineFuelLevel + randIntDelta3(),
 		fuelConsumption:       15 + rand.Float64()*5,
 		pantographVoltage:     p.baselinePantographVoltage + randn(200),
 		tractionCurrent:       1000 + rand.Float64()*200,
@@ -365,4 +365,8 @@ func clamp(v, min, max float64) float64 {
 
 func randn(scale float64) float64 {
 	return (rand.Float64()*2 - 1) * scale
+}
+
+func randIntDelta3() float64 {
+	return float64(rand.Intn(7) - 3) // [-3, +3]
 }
