@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useThemeStore } from "../store/useThemeStore";
 
 const ROUTES = [
   {
@@ -72,6 +73,7 @@ type FilterType = "all" | "normal" | "warning" | "critical";
 
 export function RouteList() {
   const navigate = useNavigate();
+  const { dark, toggle } = useThemeStore();
   const [filter, setFilter] = useState<FilterType>("all");
 
   const filtered =
@@ -139,10 +141,26 @@ export function RouteList() {
         >
           Центр управления · КТЖ
         </span>
-        <div
-          style={{ marginLeft: "auto", fontSize: 14, color: "var(--text3)" }}
-        >
-          {new Date().toLocaleString("ru-RU")}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+          <span style={{ fontSize: 14, color: "var(--text3)" }}>
+            {new Date().toLocaleString("ru-RU")}
+          </span>
+          <button
+            onClick={toggle}
+            style={{
+              background: "transparent",
+              border: "1.5px solid var(--border)",
+              borderRadius: 8,
+              padding: "6px 14px",
+              fontSize: 16,
+              cursor: "pointer",
+              color: "var(--text2)",
+              transition: "background .15s",
+            }}
+            title="Переключить тему"
+          >
+            {dark ? "☀" : "🌙"}
+          </button>
         </div>
       </div>
 

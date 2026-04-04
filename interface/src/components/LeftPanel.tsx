@@ -1,4 +1,4 @@
-import { useTelemetryStore } from "../store/useTelemetryStore";
+import { useDisplayFrame } from "../hooks/useDisplayFrame";
 
 const MAX: Record<string, number> = {
   engine_temp: 180,
@@ -56,7 +56,7 @@ function Metric({
 }
 
 export function LeftPanel() {
-  const frame = useTelemetryStore((s) => s.frame);
+  const frame = useDisplayFrame();
   const score = frame?.health_score ?? 0;
   const status = frame?.health_status ?? "normal";
   const arcCol =

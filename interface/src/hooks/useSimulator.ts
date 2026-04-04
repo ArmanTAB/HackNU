@@ -61,7 +61,6 @@ export function useSimulator() {
       }
       if (sc === "overheat") {
         s.engine_temp = 148;
-        s.oil_pressure = 2.1;
         s.rpm = 1820;
       }
       if (sc === "fuel") {
@@ -76,6 +75,38 @@ export function useSimulator() {
         s.voltage = 480;
         s.current = 2350;
       }
+      if (sc === "overload") {
+        s.traction = 480;
+        s.current = 2300;
+        s.rpm = 1950;
+        s.engine_temp = 118;
+        s.fuel_rate = 95;
+      }
+      if (sc === "wheel_slip") {
+        s.speed = 145;
+        s.traction = 30;
+        s.rpm = 1900;
+      }
+      if (sc === "fuel_leak") {
+        s.fuel_level = 18;
+        s.fuel_rate = 98;
+      }
+      if (sc === "power_surge") {
+        s.voltage = 810;
+        s.current = 2280;
+      }
+      if (sc === "cold_engine") {
+        s.engine_temp = 18;
+        s.oil_pressure = 2.8;
+        s.rpm = 400;
+        s.speed = 0;
+        s.fuel_rate = 12;
+      }
+      if (sc === "brake_fail") {
+        s.speed = 138;
+        s.traction = 0;
+        s.oil_pressure = 1.6;
+      }
       if (sc === "all") {
         s.engine_temp = 162;
         s.fuel_level = 3;
@@ -84,6 +115,11 @@ export function useSimulator() {
         s.speed = 0;
         s.rpm = 0;
       }
+    };
+
+    (window as any).__simState = state.current;
+    (window as any).setParam = (key: string, value: number) => {
+      (state.current as any)[key] = value;
     };
 
     const tick = () => {
