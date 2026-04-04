@@ -72,6 +72,96 @@ func (r *TelemetryPg) UpsertCurrent(ctx context.Context, t *domain.Telemetry) er
 	return nil
 }
 
+func (r *TelemetryPg) UpsertCurrentTx(ctx context.Context, tx pgx.Tx, t *domain.Telemetry) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO telemetry_current (
+			locomotive_id, ts,
+			speed, traction_force, wheel_slip,
+			engine_rpm, engine_temp, oil_pressure, oil_temp, fuel_level, fuel_consumption,
+			pantograph_voltage, traction_current, traction_voltage, inverter_temp, battery_voltage,
+			brake_pipe_pressure, brake_cylinder_pressure, main_reservoir_pressure,
+			ambient_temp, gps_lat, gps_lon, health
+		) VALUES (
+			$1, $2,
+			$3, $4, $5,
+			$6, $7, $8, $9, $10, $11,
+			$12, $13, $14, $15, $16,
+			$17, $18, $19,
+			$20, $21, $22, $23
+		)
+		ON CONFLICT (locomotive_id) DO UPDATE SET
+			ts                      = EXCLUDED.ts,
+			speed                   = COALESCE(EXCLUDED.speed, telemetry_current.speed),
+			traction_force          = COALESCE(EXCLUDED.traction_force, telemetry_current.traction_force),
+			wheel_slip              = COALESCE(EXCLUDED.wheel_slip, telemetry_current.wheel_slip),
+			engine_rpm              = COALESCE(EXCLUDED.engine_rpm, telemetry_current.engine_rpm),
+			engine_temp             = COALESCE(EXCLUDED.engine_temp, telemetry_current.engine_temp),
+			oil_pressure            = COALESCE(EXCLUDED.oil_pressure, telemetry_current.oil_pressure),
+			oil_temp                = COALESCE(EXCLUDED.oil_temp, telemetry_current.oil_temp),
+			fuel_level              = COALESCE(EXCLUDED.fuel_level, telemetry_current.fuel_level),
+			fuel_consumption        = COALESCE(EXCLUDED.fuel_consumption, telemetry_current.fuel_consumption),
+			pantograph_voltage      = COALESCE(EXCLUDED.pantograph_voltage, telemetry_current.pantograph_voltage),
+			traction_current        = COALESCE(EXCLUDED.traction_current, telemetry_current.traction_current),
+			traction_voltage        = COALESCE(EXCLUDED.traction_voltage, telemetry_current.traction_voltage),
+			inverter_temp           = COALESCE(EXCLUDED.inverter_temp, telemetry_current.inverter_temp),
+			battery_voltage         = COALESCE(EXCLUDED.battery_voltage, telemetry_current.battery_voltage),
+			brake_pipe_pressure     = COALESCE(EXCLUDED.brake_pipe_pressure, telemetry_current.brake_pipe_pressure),
+			brake_cylinder_pressure = COALESCE(EXCLUDED.brake_cylinder_pressure, telemetry_current.brake_cylinder_pressure),
+			main_reservoir_pressure = COALESCE(EXCLUDED.main_reservoir_pressure, telemetry_current.main_reservoir_pressure),
+			ambient_temp            = COALESCE(EXCLUDED.ambient_temp, telemetry_current.ambient_temp),
+			gps_lat                 = COALESCE(EXCLUDED.gps_lat, telemetry_current.gps_lat),
+			gps_lon                 = COALESCE(EXCLUDED.gps_lon, telemetry_current.gps_lon),
+			health                  = COALESCE(EXCLUDED.health, telemetry_current.health)
+	`,
+		t.LocomotiveID, t.Ts,
+		t.Speed, t.TractionForce, t.WheelSlip,
+		t.EngineRpm, t.EngineTemp, t.OilPressure, t.OilTemp, t.FuelLevel, t.FuelConsumption,
+		t.PantographVoltage, t.TractionCurrent, t.TractionVoltage, t.InverterTemp, t.BatteryVoltage,
+		t.BrakePipePressure, t.BrakeCylinderPressure, t.MainReservoirPressure,
+		t.AmbientTemp, t.GpsLat, t.GpsLon, t.Health,
+	)
+	if err != nil {
+		return fmt.Errorf("telemetry_pg.UpsertCurrentTx: %w", err)
+	}
+	return nil
+}
+
+func (r *TelemetryPg) InsertHistoryTx(ctx context.Context, tx pgx.Tx, t *domain.Telemetry) error {
+	batch := &pgx.Batch{}
+	batch.Queue(`
+		INSERT INTO telemetry_history (
+			locomotive_id, ts,
+			speed, traction_force, wheel_slip,
+			engine_rpm, engine_temp, oil_pressure, oil_temp, fuel_level, fuel_consumption,
+			pantograph_voltage, traction_current, traction_voltage, inverter_temp, battery_voltage,
+			brake_pipe_pressure, brake_cylinder_pressure, main_reservoir_pressure,
+			ambient_temp, gps_lat, gps_lon, health
+		) VALUES (
+			$1, $2,
+			$3, $4, $5,
+			$6, $7, $8, $9, $10, $11,
+			$12, $13, $14, $15, $16,
+			$17, $18, $19,
+			$20, $21, $22, $23
+		)
+	`,
+		t.LocomotiveID, t.Ts,
+		t.Speed, t.TractionForce, t.WheelSlip,
+		t.EngineRpm, t.EngineTemp, t.OilPressure, t.OilTemp, t.FuelLevel, t.FuelConsumption,
+		t.PantographVoltage, t.TractionCurrent, t.TractionVoltage, t.InverterTemp, t.BatteryVoltage,
+		t.BrakePipePressure, t.BrakeCylinderPressure, t.MainReservoirPressure,
+		t.AmbientTemp, t.GpsLat, t.GpsLon, t.Health,
+	)
+
+	br := tx.SendBatch(ctx, batch)
+	defer br.Close()
+
+	if _, err := br.Exec(); err != nil {
+		return fmt.Errorf("telemetry_pg.InsertHistoryTx: %w", err)
+	}
+	return nil
+}
+
 func (r *TelemetryPg) InsertHistory(ctx context.Context, t *domain.Telemetry) error {
 	batch := &pgx.Batch{}
 	batch.Queue(`

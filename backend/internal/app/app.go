@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thedakeen/locomotive-twin/internal/config"
@@ -13,6 +14,7 @@ import (
 
 	infdb "github.com/thedakeen/locomotive-twin/internal/infrastructure/db"
 	infkafka "github.com/thedakeen/locomotive-twin/internal/infrastructure/kafka"
+	infoutbox "github.com/thedakeen/locomotive-twin/internal/infrastructure/outbox"
 	infrepo "github.com/thedakeen/locomotive-twin/internal/infrastructure/repository"
 	infws "github.com/thedakeen/locomotive-twin/internal/infrastructure/ws"
 	transphttp "github.com/thedakeen/locomotive-twin/internal/transport/http"
@@ -24,6 +26,7 @@ type App struct {
 	hub      *infws.Hub
 	consumer *infkafka.Consumer
 	producer *infkafka.Producer
+	relay    *infoutbox.Relay
 	sim      *simulator.Simulator
 	router   *transphttp.Router
 }
@@ -50,6 +53,7 @@ func New(cfg *config.Config) (*App, error) {
 	eventRepo := infrepo.NewEventPg(pool)
 	healthRepo := infrepo.NewHealthPg(pool)
 	userRepo := infrepo.NewUserPg(pool)
+	outboxRepo := infrepo.NewOutboxPg(pool)
 
 	// Services
 	locoSvc := service.NewLocomotiveService(locoRepo)
@@ -66,16 +70,20 @@ func New(cfg *config.Config) (*App, error) {
 	// Kafka producer (for simulator)
 	producer := infkafka.NewProducer(cfg.KafkaBrokers, cfg.KafkaTopicTelemetry)
 
+	// Outbox relay
+	relay := infoutbox.NewRelay(outboxRepo, hub, 100*time.Millisecond, 50)
+
 	// Kafka consumer
 	consumer := infkafka.NewConsumer(
 		cfg.KafkaBrokers,
 		cfg.KafkaTopicTelemetry,
 		cfg.KafkaGroupID,
+		pool,
 		telRepo,
 		locoRepo,
+		outboxRepo,
 		alertSvc,
 		healthSvc,
-		hub,
 		cfg.HealthSnapshotInterval,
 	)
 
@@ -93,6 +101,7 @@ func New(cfg *config.Config) (*App, error) {
 		hub:      hub,
 		consumer: consumer,
 		producer: producer,
+		relay:    relay,
 		sim:      sim,
 		router:   router,
 	}, nil
@@ -101,6 +110,7 @@ func New(cfg *config.Config) (*App, error) {
 func (a *App) Run(ctx context.Context) error {
 	go a.hub.Run()
 	go a.consumer.Run(ctx)
+	go a.relay.Run(ctx)
 
 	if a.sim != nil {
 		go a.sim.Run(ctx)

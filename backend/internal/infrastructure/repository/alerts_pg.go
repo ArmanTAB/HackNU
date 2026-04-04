@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thedakeen/locomotive-twin/internal/domain"
 )
@@ -28,6 +29,32 @@ func (r *AlertPg) Insert(ctx context.Context, a *domain.Alert) (int64, error) {
 		return 0, fmt.Errorf("alert_pg.Insert: %w", err)
 	}
 	return id, nil
+}
+
+func (r *AlertPg) InsertTx(ctx context.Context, tx pgx.Tx, a *domain.Alert) (int64, error) {
+	var id int64
+	err := tx.QueryRow(ctx, `
+		INSERT INTO alerts (locomotive_id, ts, parameter_name, value, threshold_value, severity, message)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`, a.LocomotiveID, a.Ts, a.ParameterName, a.Value, a.ThresholdValue, a.Severity, a.Message).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("alert_pg.InsertTx: %w", err)
+	}
+	return id, nil
+}
+
+func (r *AlertPg) HasActiveAlertTx(ctx context.Context, tx pgx.Tx, locomotiveID int, parameterName, severity string) (bool, error) {
+	var count int
+	err := tx.QueryRow(ctx, `
+		SELECT COUNT(1) FROM alerts
+		WHERE locomotive_id=$1 AND parameter_name=$2 AND severity=$3
+		  AND is_acknowledged=FALSE AND resolved_at IS NULL
+	`, locomotiveID, parameterName, severity).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("alert_pg.HasActiveAlertTx: %w", err)
+	}
+	return count > 0, nil
 }
 
 func (r *AlertPg) GetByLocomotive(ctx context.Context, locomotiveID int, activeOnly bool, severity string) ([]*domain.Alert, error) {
