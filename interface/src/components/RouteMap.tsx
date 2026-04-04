@@ -75,10 +75,18 @@ export function RouteMap({ from, to, expandable }: RouteMapProps) {
     if (trainPos) console.log("[GPS]", trainPos[0].toFixed(6), trainPos[1].toFixed(6));
   }, [trainPos]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (open) {
+      root.classList.add("map-modal-open");
+    } else {
+      root.classList.remove("map-modal-open");
+    }
+    return () => root.classList.remove("map-modal-open");
+  }, [open]);
+
   if (path.length < 2) return (
-    <div style={{ fontSize: 12, color: "var(--text3)", padding: "8px 0" }}>
-      Загрузка маршрута...
-    </div>
+    <div className="route-map-loading">Загрузка маршрута...</div>
   );
 
   return (
