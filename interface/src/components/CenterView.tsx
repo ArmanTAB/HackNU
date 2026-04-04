@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useTelemetryStore } from "../store/useTelemetryStore";
+import { useDisplayFrame } from "../hooks/useDisplayFrame";
+import { TimeScrubber } from "./TimeScrubber";
 
 export function CenterView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frame = useTelemetryStore((s) => s.frame);
+  const frame = useDisplayFrame();
   const speed = frame?.speed ?? 0;
   const score = frame?.health_score ?? 100;
   const speedColor =
@@ -710,6 +711,7 @@ export function CenterView() {
         <div className="speed-unit">КМ / ЧАС</div>
       </div>
       <canvas ref={canvasRef} id="cv" />
+      <TimeScrubber />
     </div>
   );
 }

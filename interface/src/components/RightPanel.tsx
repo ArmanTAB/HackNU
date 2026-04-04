@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { useDisplayFrame } from "../hooks/useDisplayFrame";
 import { RouteMap } from "./RouteMap";
 
 const NODES = [
@@ -72,7 +73,7 @@ export function RightPanel({
   routeInfo?: RouteInfo;
   showScenarios?: boolean;
 }) {
-  const frame = useTelemetryStore((s) => s.frame);
+  const frame = useDisplayFrame();
   const alerts = useTelemetryStore((s) => s.alerts);
   const score = frame?.health_score ?? 100;
   const nodeColor =
