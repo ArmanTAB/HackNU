@@ -18,8 +18,8 @@ var routeGeoJSON []byte
 type geoJSONFile struct {
 	Features []struct {
 		Geometry struct {
-			Type        string         `json:"type"`
-			Coordinates [][][2]float64 `json:"coordinates"`
+			Type        string          `json:"type"`
+			Coordinates json.RawMessage `json:"coordinates"`
 		} `json:"geometry"`
 	} `json:"features"`
 }
@@ -31,16 +31,30 @@ func loadRoutePoints() [][2]float64 {
 		return nil
 	}
 	for _, f := range gj.Features {
-		if f.Geometry.Type == "MultiLineString" {
+		switch f.Geometry.Type {
+		case "MultiLineString":
+			var ms [][][2]float64
+			if err := json.Unmarshal(f.Geometry.Coordinates, &ms); err != nil {
+				slog.Warn("simulator: failed to parse MultiLineString coordinates", "err", err)
+				continue
+			}
 			var pts [][2]float64
-			for _, line := range f.Geometry.Coordinates {
+			for _, line := range ms {
 				pts = append(pts, line...)
 			}
-			slog.Info("simulator: loaded route", "points", len(pts))
+			slog.Info("simulator: loaded route", "type", "MultiLineString", "points", len(pts))
+			return pts
+		case "LineString":
+			var pts [][2]float64
+			if err := json.Unmarshal(f.Geometry.Coordinates, &pts); err != nil {
+				slog.Warn("simulator: failed to parse LineString coordinates", "err", err)
+				continue
+			}
+			slog.Info("simulator: loaded route", "type", "LineString", "points", len(pts))
 			return pts
 		}
 	}
-	slog.Warn("simulator: no MultiLineString found in geojson")
+	slog.Warn("simulator: no usable geometry found in geojson")
 	return nil
 }
 
@@ -171,8 +185,8 @@ func initialState(id int, routePts [][2]float64, routeIdx int) *locoState {
 	if p.anomalyMinInterval > 0 {
 		initialAnomalyOffset = rand.Intn(p.anomalyMinInterval)
 	}
-	gpsLat := 51.1801 + rand.Float64()*0.01
-	gpsLon := 71.4460 + rand.Float64()*0.01
+	gpsLat := 0.00
+	gpsLon := 0.05
 	if len(routePts) > 0 {
 		pt := routePts[routeIdx]
 		gpsLon = pt[0]
