@@ -36,6 +36,7 @@ function Metric({
   unit: string;
 }) {
   const pct = Math.min(100, Math.max(0, (val / (MAX[valueKey] ?? 100)) * 100));
+  const displayVal = Math.round(val);
   const col = statusColor(valueKey, val);
   return (
     <div className="metric">
@@ -47,7 +48,7 @@ function Metric({
       </div>
       <div className="mr">
         <span className="mval" style={{ color: col }}>
-          {val}
+          {displayVal}
         </span>
         <span className="munit">{unit}</span>
       </div>
@@ -58,6 +59,7 @@ function Metric({
 export function LeftPanel() {
   const frame = useDisplayFrame();
   const score = frame?.health_score ?? 0;
+  const displayScore = Math.round(score);
   const status = frame?.health_status ?? "normal";
   const arcCol =
     status === "normal"
@@ -97,7 +99,7 @@ export function LeftPanel() {
             />
           </svg>
           <div className="h-num" style={{ color: arcCol }}>
-            {score}
+            {displayScore}
           </div>
           <div className="h-lbl" style={{ color: arcCol }}>
             {status === "normal"

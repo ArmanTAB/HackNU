@@ -12,8 +12,20 @@ interface TelemetryStore {
   connected:    boolean;
   replayIndex:  number | null;      // null = live
   setFrame:     (f: TelemetryFrame) => void;
+  addAlerts:    (alerts: Alert[]) => void;
   setConnected: (v: boolean) => void;
   setReplay:    (i: number | null) => void;
+}
+
+function mergeAlerts(incoming: Alert[], existing: Alert[]): Alert[] {
+  const seen = new Set<string>();
+  const merged: Alert[] = [];
+  for (const a of [...incoming, ...existing]) {
+    if (seen.has(a.id)) continue;
+    seen.add(a.id);
+    merged.push(a);
+  }
+  return merged.slice(0, 8);
 }
 
 export const useTelemetryStore = create<TelemetryStore>((set) => ({
@@ -38,11 +50,14 @@ export const useTelemetryStore = create<TelemetryStore>((set) => ({
       const snapshots = [...s.snapshots, f    ].slice(-SNAPSHOT_MAX);
 
       const newAlerts =
-        f.alerts.length > 0 ? [...f.alerts, ...s.alerts].slice(0, 8) : s.alerts;
+        f.alerts.length > 0 ? mergeAlerts(f.alerts, s.alerts) : s.alerts;
 
       // если в режиме replay — не двигаем replayIndex, frame обновляется в фоне
       return { frame: f, history, snapshots, alerts: newAlerts };
     }),
+
+  addAlerts: (alerts) =>
+    set((s) => ({ alerts: mergeAlerts(alerts, s.alerts) })),
 
   setConnected: (connected) => set({ connected }),
   setReplay:    (replayIndex) => set({ replayIndex }),

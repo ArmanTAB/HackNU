@@ -136,7 +136,7 @@ export function RightPanel({
           </div>
           <div className="mr">
             <span className="mval" style={{ color: "var(--purple)" }}>
-              {frame?.voltage ?? 0}
+              {Math.round(frame?.voltage ?? 0)}
             </span>
             <span className="munit"> В</span>
           </div>
@@ -156,7 +156,7 @@ export function RightPanel({
           </div>
           <div className="mr">
             <span className="mval" style={{ color: "var(--purple)" }}>
-              {frame?.current ?? 0}
+              {Math.round(frame?.current ?? 0)}
             </span>
             <span className="munit"> А</span>
           </div>
@@ -264,6 +264,7 @@ export function RightPanel({
                               <b style={{ color: sc.color }}>{val}{meta.unit}</b>
                             </div>
                             <input
+                            title="param"
                               type="range"
                               min={meta.min}
                               max={meta.max}

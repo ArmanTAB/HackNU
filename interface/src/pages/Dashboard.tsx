@@ -1,10 +1,12 @@
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSimulator } from "../hooks/useSimulator";
+import { useTelemetryWS } from "../hooks/useTelemetryWS";
 import { Topbar } from "../components/Topbar";
 import { LeftPanel } from "../components/LeftPanel";
 import { CenterView } from "../components/CenterView";
 import { RightPanel } from "../components/RightPanel";
 import { BottomCharts } from "../components/BottomCharts";
+import { useTelemetryStore } from "../store/useTelemetryStore";
 
 const ROUTE_INFO: Record<
   string,
@@ -77,12 +79,46 @@ const ROUTE_INFO: Record<
   },
 };
 
+const WS_ID_MAP: Record<string, number> = {
+  "SD40-2-0847": 1,
+  "SD40-2-0312": 2,
+  "SD40-2-0521": 3,
+  "SD40-2-0934": 1,
+};
+
+function mapApiAlerts(data: any[]): { id: string; severity: "warning" | "critical"; code: string; message: string; ts: number }[] {
+  return data.map((a, idx) => ({
+    id: String(a.id ?? `${Date.now()}-${idx}`),
+    severity: a.severity === "critical" ? "critical" : "warning",
+    code: a.parameter_name ?? a.code ?? "ALERT",
+    message: a.message ?? "Alert",
+    ts: a.ts ? new Date(a.ts).getTime() : Date.now(),
+  }));
+}
+
 export function Dashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["SD40-2-0847"];
+  const wsId = WS_ID_MAP[id ?? ""] ?? 1;
+  const addAlerts = useTelemetryStore((s) => s.addAlerts);
 
-  useSimulator();
+  useTelemetryWS(String(wsId), "ws://localhost:8081/ws");
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/v1/locomotives/${wsId}/alerts?active=true`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (!active || !Array.isArray(data)) return;
+        const mapped = mapApiAlerts(data);
+        if (mapped.length > 0) addAlerts(mapped);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [wsId, addAlerts]);
 
   return (
     <div className="shell">
