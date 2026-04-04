@@ -7,7 +7,7 @@ Real-time telemetry dashboard and health monitoring system for locomotive dispat
 ## Architecture
 
 ```
-<img width="802" height="351" alt="image_2026-04-05_01-32-31" src="https://github.com/user-attachments/assets/a7656957-f7e8-42e4-bb81-a48283a532d8" />
+![arch_diagram.png](https://github.com/ArmanTAB/HackNU/blob/main/assets/arch_diagram.png)
 ```
 
 ---
