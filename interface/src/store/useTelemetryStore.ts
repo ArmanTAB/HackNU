@@ -4,6 +4,24 @@ import type { TelemetryFrame, HistoryPoint, Alert, HealthFactor, EventItem } fro
 const HISTORY_MAX  = 60;   // для спарклайнов
 const SNAPSHOT_MAX = 300;  // 5 минут при 1 Гц
 
+export interface TelemetryLimits {
+  speed_warning_max?:              number | null;
+  speed_critical_max?:             number | null;
+  engine_temp_warning_max?:        number | null;
+  engine_temp_critical_max?:       number | null;
+  oil_pressure_warning_max?:       number | null;
+  oil_pressure_critical_max?:      number | null;
+  fuel_level_warning_max?:         number | null;
+  fuel_level_critical_max?:        number | null;
+  engine_rpm_warning_max?:         number | null;
+  engine_rpm_critical_max?:        number | null;
+  traction_voltage_warning_max?:   number | null;
+  traction_voltage_critical_max?:  number | null;
+  traction_current_warning_max?:   number | null;
+  traction_current_critical_max?:  number | null;
+  [key: string]: number | null | undefined;
+}
+
 interface TelemetryStore {
   frame:        TelemetryFrame | null;
   history:      HistoryPoint[];
@@ -11,6 +29,7 @@ interface TelemetryStore {
   alerts:       Alert[];
   healthFactors: HealthFactor[];
   events:       EventItem[];
+  limits:       TelemetryLimits;
   connected:    boolean;
   replayIndex:  number | null;      // null = live
   replayWindow: number;             // minutes
@@ -21,6 +40,7 @@ interface TelemetryStore {
   setHealthFactors: (factors: HealthFactor[]) => void;
   setEvents:    (events: EventItem[]) => void;
   addEvent:     (event: EventItem) => void;
+  setLimits:    (limits: TelemetryLimits) => void;
   setConnected: (v: boolean) => void;
   setReplay:    (i: number | null) => void;
   setReplayWindow: (m: number) => void;
@@ -44,6 +64,7 @@ export const useTelemetryStore = create<TelemetryStore>((set) => ({
   alerts:      [],
   healthFactors: [],
   events:      [],
+  limits:      {},
   connected:   false,
   replayIndex: null,
   replayWindow: 5,
@@ -95,6 +116,7 @@ export const useTelemetryStore = create<TelemetryStore>((set) => ({
   setSnapshots: (frames) =>
     set(() => ({ snapshots: frames, replayIndex: null })),
 
+  setLimits: (limits) => set({ limits }),
   setConnected: (connected) => set({ connected }),
   setReplay:    (replayIndex) => set({ replayIndex }),
   setReplayWindow: (replayWindow) => set({ replayWindow }),

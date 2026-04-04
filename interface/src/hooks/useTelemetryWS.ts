@@ -72,7 +72,8 @@ export function useTelemetryWS(locomotiveId: string, wsUrl: string) {
 
     function connect() {
       if (!isActive) return;
-      const url = `${wsUrl}?locomotive_id=${encodeURIComponent(locomotiveId)}`;
+      const token = localStorage.getItem("jwt_token");
+      const url = `${wsUrl}?locomotive_id=${encodeURIComponent(locomotiveId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 

@@ -1,7 +1,7 @@
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
 import { useTelemetryStore } from "../store/useTelemetryStore";
 
-const MAX: Record<string, number> = {
+const MAX_FALLBACK: Record<string, number> = {
   engine_temp: 180,
   oil_pressure: 12,
   rpm: 2000,
@@ -30,13 +30,16 @@ function Metric({
   valueKey,
   val,
   unit,
+  max,
 }: {
   label: string;
   valueKey: string;
   val: number;
   unit: string;
+  max?: number;
 }) {
-  const pct = Math.min(100, Math.max(0, (val / (MAX[valueKey] ?? 100)) * 100));
+  const maxVal = max ?? MAX_FALLBACK[valueKey] ?? 100;
+  const pct = Math.min(100, Math.max(0, (val / maxVal) * 100));
   const displayVal = Math.round(val);
   const col = statusColor(valueKey, val);
   return (
@@ -94,6 +97,7 @@ function ElectricMetric({
 export function LeftPanel() {
   const frame = useDisplayFrame();
   const healthFactors = useTelemetryStore((s) => s.healthFactors);
+  const limits = useTelemetryStore((s) => s.limits);
   const score = frame?.health_score ?? 0;
   const displayScore = Math.round(score);
   const status = frame?.health_status ?? "normal";
@@ -162,30 +166,6 @@ export function LeftPanel() {
           <div className="h-sub">HEALTH INDEX / 100</div>
         </div>
       </div>
-
-      <div className="sec">
-        <div className="sec-t">Факторы здоровья</div>
-        {healthFactors.length === 0 ? (
-          <div className="factor-item factor-empty">Данных пока нет</div>
-        ) : (
-          healthFactors.slice(0, 5).map((factor, idx) => {
-            const info = formatFactor(factor as Record<string, any>);
-            const labelClass =
-              info.severity === "critical"
-                ? "factor-label critical"
-                : info.severity === "warning"
-                  ? "factor-label warning"
-                  : "factor-label";
-            return (
-              <div key={`${info.label}-${idx}`} className="factor-item">
-                <span className={labelClass}>{info.label}</span>
-                {info.value && <span className="factor-val">{info.value}</span>}
-              </div>
-            );
-          })
-        )}
-      </div>
-
       <div className="sec">
         <div className="sec-t">Дизель</div>
         <Metric
@@ -193,18 +173,21 @@ export function LeftPanel() {
           valueKey="engine_temp"
           val={frame?.engine_temp ?? 0}
           unit="°C"
+          max={limits.engine_temp_critical_max ?? limits.engine_temp_warning_max ?? undefined}
         />
         <Metric
           label="Давление масла"
           valueKey="oil_pressure"
           val={frame?.oil_pressure ?? 0}
           unit=" бар"
+          max={limits.oil_pressure_critical_max ?? limits.oil_pressure_warning_max ?? undefined}
         />
         <Metric
           label="Обороты"
           valueKey="rpm"
           val={frame?.rpm ?? 0}
           unit=" об/м"
+          max={limits.engine_rpm_critical_max ?? limits.engine_rpm_warning_max ?? undefined}
         />
       </div>
 
@@ -213,13 +196,13 @@ export function LeftPanel() {
         <ElectricMetric
           label="Напряжение"
           val={frame?.voltage ?? 0}
-          max={800}
+          max={limits.traction_voltage_critical_max ?? limits.traction_voltage_warning_max ?? 1000}
           unit="В"
         />
         <ElectricMetric
           label="Ток тяги"
           val={frame?.current ?? 0}
-          max={2500}
+          max={limits.traction_current_critical_max ?? limits.traction_current_warning_max ?? 2500}
           unit="А"
         />
       </div>
@@ -231,6 +214,7 @@ export function LeftPanel() {
           valueKey="speed"
           val={frame?.speed ?? 0}
           unit=" км/ч"
+          max={limits.speed_critical_max ?? limits.speed_warning_max ?? undefined}
         />
         <Metric
           label="Тяга"
@@ -247,6 +231,7 @@ export function LeftPanel() {
           valueKey="fuel_level"
           val={frame?.fuel_level ?? 0}
           unit="%"
+          max={limits.fuel_level_critical_max ?? limits.fuel_level_warning_max ?? undefined}
         />
         <Metric
           label="Расход"

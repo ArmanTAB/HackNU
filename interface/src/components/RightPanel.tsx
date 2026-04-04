@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
 import { RouteMap } from "./RouteMap";
+import { api } from "../api/client";
 
 const NODES = [
   { key: "engine",  label: "Двигатель",        icon: "⚙" },
@@ -10,7 +11,7 @@ const NODES = [
   { key: "bogie",   label: "Тележки",           icon: "🔩" },
   { key: "body",    label: "Кузов",             icon: "🚂" },
   { key: "fuel",    label: "Топливо",           icon: "⛽" },
-  { key: "roof",    label: "Крыша / электрика", icon: "⚡" },
+  { key: "roof",    label: "электрика", icon: "⚡" },
   { key: "lights",  label: "Фары",              icon: "💡" },
 ];
 
@@ -116,14 +117,8 @@ export function RightPanel({
 
   function handleAck(alertId: string) {
     if (!locomotiveId) return;
-    fetch(`/api/v1/locomotives/${locomotiveId}/alerts/${alertId}/acknowledge`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ acknowledged_by: "dispatcher" }),
-    })
-      .then((r) => {
-        if (r.ok) ackAlert(alertId);
-      })
+    api.post(`/api/v1/locomotives/${locomotiveId}/alerts/${alertId}/acknowledge`, { acknowledged_by: "dispatcher" })
+      .then(() => ackAlert(alertId))
       .catch(() => undefined);
   }
 
@@ -135,8 +130,27 @@ export function RightPanel({
       from: from.toISOString(),
       to: to.toISOString(),
     });
-    const url = `/api/v1/locomotives/${locomotiveId}/export/csv?${params.toString()}`;
-    window.open(url, "_blank");
+    const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+    const token = localStorage.getItem("jwt_token");
+    fetch(`${BASE_URL}/api/v1/locomotives/${locomotiveId}/export/csv?${params.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => res.text())
+      .then((text) => {
+        // Convert comma separator to semicolon for Excel (Russian locale)
+        const semicolonCsv = text
+          .split("\n")
+          .map((line) => line.split(",").join(";"))
+          .join("\n");
+        // BOM for correct UTF-8 encoding in Excel
+        const blob = new Blob(["\uFEFF" + semicolonCsv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `locomotive_${locomotiveId}_${to.toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      })
+      .catch(() => undefined);
   }
 
   function handleCreateEvent() {
@@ -150,12 +164,7 @@ export function RightPanel({
       ts: new Date().toISOString(),
     };
 
-    fetch(`/api/v1/locomotives/${locomotiveId}/events`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-      .then((r) => (r.ok ? r.json() : null))
+    api.post<any>(`/api/v1/locomotives/${locomotiveId}/events`, payload)
       .then((data) => {
         if (data) addEvent(data);
         setEventText("");
