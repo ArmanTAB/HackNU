@@ -704,6 +704,7 @@ export function CenterView() {
 
   return (
     <div className="cw">
+      <TimeScrubber />
       <div className="tooltip" id="tip" />
       <div className="speed-hud">
         <div className="speed-big" style={{ color: speedColor }}>

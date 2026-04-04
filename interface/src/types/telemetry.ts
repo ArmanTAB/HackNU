@@ -6,6 +6,23 @@ export interface Alert {
   code: string;
   message: string;
   ts: number;
+  is_acknowledged?: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: number;
+}
+
+export interface HealthFactor {
+  [key: string]: any;
+}
+
+export interface EventItem {
+  id?: number;
+  locomotive_id?: number;
+  event_type?: "incident" | "maintenance" | "note" | "replay_mark" | string;
+  description?: string;
+  created_by?: string;
+  ts?: string;
+  telemetry_snapshot?: Record<string, unknown>;
 }
 
 export interface TelemetryFrame {

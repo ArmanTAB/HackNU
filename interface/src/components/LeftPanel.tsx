@@ -1,4 +1,5 @@
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
+import { useTelemetryStore } from "../store/useTelemetryStore";
 
 const MAX: Record<string, number> = {
   engine_temp: 180,
@@ -58,6 +59,7 @@ function Metric({
 
 export function LeftPanel() {
   const frame = useDisplayFrame();
+  const healthFactors = useTelemetryStore((s) => s.healthFactors);
   const score = frame?.health_score ?? 0;
   const displayScore = Math.round(score);
   const status = frame?.health_status ?? "normal";
@@ -68,6 +70,21 @@ export function LeftPanel() {
         ? "var(--warn)"
         : "var(--crit)";
   const arcOffset = 163 - (163 * score) / 100;
+
+  function formatFactor(factor: Record<string, any>): { label: string; value?: string; severity?: string } {
+    const label =
+      factor.name ??
+      factor.parameter_name ??
+      factor.parameter ??
+      factor.metric ??
+      factor.label ??
+      "Фактор";
+    const rawValue = factor.value ?? factor.score ?? factor.delta ?? factor.diff;
+    const unit = factor.unit ?? "";
+    const value = rawValue !== undefined ? `${Math.round(rawValue * 100) / 100}${unit}` : undefined;
+    const severity = factor.severity ?? factor.level;
+    return { label, value, severity };
+  }
 
   return (
     <div className="panel">
@@ -110,6 +127,29 @@ export function LeftPanel() {
           </div>
           <div className="h-sub">HEALTH INDEX / 100</div>
         </div>
+      </div>
+
+      <div className="sec">
+        <div className="sec-t">Факторы здоровья</div>
+        {healthFactors.length === 0 ? (
+          <div className="factor-item factor-empty">Данных пока нет</div>
+        ) : (
+          healthFactors.slice(0, 5).map((factor, idx) => {
+            const info = formatFactor(factor as Record<string, any>);
+            const labelClass =
+              info.severity === "critical"
+                ? "factor-label critical"
+                : info.severity === "warning"
+                  ? "factor-label warning"
+                  : "factor-label";
+            return (
+              <div key={`${info.label}-${idx}`} className="factor-item">
+                <span className={labelClass}>{info.label}</span>
+                {info.value && <span className="factor-val">{info.value}</span>}
+              </div>
+            );
+          })
+        )}
       </div>
 
       <div className="sec">

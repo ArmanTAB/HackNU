@@ -9,9 +9,11 @@ function fmtOffset(ms: number) {
 }
 
 export function TimeScrubber() {
-  const snapshots   = useTelemetryStore((s) => s.snapshots);
+  const snapshots = useTelemetryStore((s) => s.snapshots);
   const replayIndex = useTelemetryStore((s) => s.replayIndex);
   const setReplay   = useTelemetryStore((s) => s.setReplay);
+  const replayWindow = useTelemetryStore((s) => s.replayWindow);
+  const setReplayWindow = useTelemetryStore((s) => s.setReplayWindow);
 
   const [playing, setPlaying]   = useState(false);
   const playRef                 = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -30,14 +32,14 @@ export function TimeScrubber() {
   useEffect(() => {
     if (playing && replayIndex !== null) {
       playRef.current = setInterval(() => {
-        setReplay((prev: number | null) => {
-          const next = (prev ?? 0) + 1;
+        const prev = useTelemetryStore.getState().replayIndex;
+        const next = (prev ?? 0) + 1;
           if (next >= total - 1) {
             setPlaying(false);
-            return null; // вернулись в live
+            setReplay(null); // вернулись в live
+            return;
           }
-          return next;
-        });
+          setReplay(next);
       }, 200);
     }
     return () => { if (playRef.current) clearInterval(playRef.current); };
@@ -46,39 +48,33 @@ export function TimeScrubber() {
   if (total < 2) return null;
 
   return (
-    <div style={{
-      position: "absolute",
-      bottom: 14,
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: "rgba(15,28,46,.82)",
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(255,255,255,.12)",
-      borderRadius: 12,
-      padding: "8px 14px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      minWidth: 360,
-      zIndex: 20,
-      boxShadow: "0 4px 20px rgba(0,0,0,.35)",
-    }}>
+    <div className="time-scrubber">
+
+      {/* окно истории */}
+      <div className="time-window">
+        {[5, 15].map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setReplayWindow(m);
+              setReplay(null);
+              setPlaying(false);
+            }}
+            className={
+              replayWindow === m
+                ? "time-window-btn time-window-btn--active"
+                : "time-window-btn"
+            }
+          >
+            {m}м
+          </button>
+        ))}
+      </div>
 
       {/* кнопка live */}
       <button
         onClick={() => { setReplay(null); setPlaying(false); }}
-        style={{
-          padding: "4px 10px",
-          borderRadius: 6,
-          border: "none",
-          background: isLive ? "var(--ok)" : "rgba(255,255,255,.1)",
-          color: "#fff",
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: ".08em",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
+        className={isLive ? "time-live-btn time-live-btn--live" : "time-live-btn"}
       >
         ● LIVE
       </button>
@@ -94,23 +90,14 @@ export function TimeScrubber() {
             setPlaying((p) => !p);
           }
         }}
-        style={{
-          width: 28, height: 28,
-          borderRadius: 6,
-          border: "1px solid rgba(255,255,255,.15)",
-          background: "rgba(255,255,255,.08)",
-          color: "#fff",
-          fontSize: 13,
-          cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}
+        className="time-play-btn"
       >
         {playing ? "⏸" : "▶"}
       </button>
 
       {/* слайдер */}
       <input
+        title="Перемотка"
         type="range"
         min={0}
         max={total - 1}
@@ -120,18 +107,11 @@ export function TimeScrubber() {
           const v = parseInt(e.target.value);
           setReplay(v === total - 1 ? null : v);
         }}
-        style={{ flex: 1, accentColor: isLive ? "var(--ok)" : "var(--cyan)", cursor: "pointer" }}
+        className={isLive ? "time-slider time-slider--live" : "time-slider"}
       />
 
       {/* время */}
-      <span style={{
-        fontSize: 12,
-        color: isLive ? "var(--ok)" : "rgba(255,255,255,.65)",
-        whiteSpace: "nowrap",
-        minWidth: 90,
-        textAlign: "right",
-        fontVariantNumeric: "tabular-nums",
-      }}>
+      <span className={isLive ? "time-label time-label--live" : "time-label"}>
         {isLive ? "сейчас" : fmtOffset(offsetMs)}
       </span>
     </div>

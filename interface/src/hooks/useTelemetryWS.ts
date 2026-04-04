@@ -8,6 +8,9 @@ type BackendAlert = {
   message?: string;
   severity?: "warning" | "critical";
   ts?: string | number;
+  is_acknowledged?: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: string | number;
 };
 
 type BackendTelemetry = {
@@ -53,6 +56,9 @@ function mapAlerts(alerts: BackendAlert[] | null | undefined): Alert[] {
     code: a.code ?? "GENERIC",
     message: a.message ?? "Unknown alert",
     ts: a.ts ? new Date(a.ts).getTime() : Date.now(),
+    is_acknowledged: a.is_acknowledged ?? false,
+    acknowledged_by: a.acknowledged_by,
+    acknowledged_at: a.acknowledged_at ? new Date(a.acknowledged_at).getTime() : undefined,
   }));
 }
 
