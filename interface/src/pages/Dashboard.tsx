@@ -4,6 +4,7 @@ import { useTelemetryWS } from "../hooks/useTelemetryWS";
 import { Topbar } from "../components/Topbar";
 import { LeftPanel } from "../components/LeftPanel";
 import { CenterView } from "../components/CenterView";
+import { AlertToasts } from "../components/AlertToasts";
 import { RightPanel } from "../components/RightPanel";
 import { BottomCharts } from "../components/BottomCharts";
 import { useTelemetryStore } from "../store/useTelemetryStore";
@@ -88,6 +89,7 @@ export function Dashboard() {
   const replayWindow = useTelemetryStore((s) => s.replayWindow);
   const setHealthFactors = useTelemetryStore((s) => s.setHealthFactors);
   const setEvents = useTelemetryStore((s) => s.setEvents);
+  const alerts = useTelemetryStore((s) => s.alerts);
 
   useTelemetryWS(String(wsId), "ws://localhost:8081/ws");
 
@@ -205,6 +207,7 @@ export function Dashboard() {
       />
       <LeftPanel />
       <CenterView />
+      <AlertToasts alerts={alerts} />
       <RightPanel routeInfo={info} locomotiveId={wsId} />
       <BottomCharts />
     </div>

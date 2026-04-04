@@ -182,54 +182,11 @@ export function RightPanel({
             to={routeInfo.to}
             expandable
           />
-          <button className="scbtn" style={{ marginTop: 10 }} onClick={handleExportCsv}>
+          <button className="scbtn export-btn" onClick={handleExportCsv}>
             Экспорт CSV (15 мин)
           </button>
         </div>
       )}
-      <div className="sec">
-        <div className="sec-t">Электрика</div>
-        <div className="metric">
-          <div className="ml">
-            <div className="mlabel">Напряжение</div>
-            <div className="mbar-w">
-              <div
-                className="mbar"
-                style={{
-                  width: Math.min(100, ((frame?.voltage ?? 0) / 800) * 100) + "%",
-                  background: "var(--purple)",
-                }}
-              />
-            </div>
-          </div>
-          <div className="mr">
-            <span className="mval" style={{ color: "var(--purple)" }}>
-              {Math.round(frame?.voltage ?? 0)}
-            </span>
-            <span className="munit"> В</span>
-          </div>
-        </div>
-        <div className="metric">
-          <div className="ml">
-            <div className="mlabel">Ток тяги</div>
-            <div className="mbar-w">
-              <div
-                className="mbar"
-                style={{
-                  width: Math.min(100, ((frame?.current ?? 0) / 2500) * 100) + "%",
-                  background: "var(--purple)",
-                }}
-              />
-            </div>
-          </div>
-          <div className="mr">
-            <span className="mval" style={{ color: "var(--purple)" }}>
-              {Math.round(frame?.current ?? 0)}
-            </span>
-            <span className="munit"> А</span>
-          </div>
-        </div>
-      </div>
 
       {showScenarios && (
         <>

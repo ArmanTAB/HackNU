@@ -57,6 +57,40 @@ function Metric({
   );
 }
 
+function ElectricMetric({
+  label,
+  val,
+  max,
+  unit,
+}: {
+  label: string;
+  val: number;
+  max: number;
+  unit: string;
+}) {
+  const pct = Math.min(100, Math.max(0, (val / max) * 100));
+  const displayVal = Math.round(val);
+  return (
+    <div className="metric">
+      <div className="ml">
+        <div className="mlabel">{label}</div>
+        <div className="mbar-w">
+          <div
+            className="mbar"
+            style={{ width: pct + "%", background: "var(--purple)" }}
+          />
+        </div>
+      </div>
+      <div className="mr">
+        <span className="mval" style={{ color: "var(--purple)" }}>
+          {displayVal}
+        </span>
+        <span className="munit"> {unit}</span>
+      </div>
+    </div>
+  );
+}
+
 export function LeftPanel() {
   const frame = useDisplayFrame();
   const healthFactors = useTelemetryStore((s) => s.healthFactors);
@@ -171,6 +205,22 @@ export function LeftPanel() {
           valueKey="rpm"
           val={frame?.rpm ?? 0}
           unit=" об/м"
+        />
+      </div>
+
+      <div className="sec">
+        <div className="sec-t">Электрика</div>
+        <ElectricMetric
+          label="Напряжение"
+          val={frame?.voltage ?? 0}
+          max={800}
+          unit="В"
+        />
+        <ElectricMetric
+          label="Ток тяги"
+          val={frame?.current ?? 0}
+          max={2500}
+          unit="А"
         />
       </div>
 

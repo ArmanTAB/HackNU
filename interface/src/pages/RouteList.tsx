@@ -223,7 +223,19 @@ export function RouteList() {
 
               <div className="route-cell-phone">{r.phone}</div>
 
-              <div className="route-cell-action">→</div>
+              <div className="route-cell-action">
+                <button
+                  className="route-action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/limits/${r.id}`);
+                  }}
+                  title="Пороги"
+                >
+                  ⚙
+                </button>
+                <div className="route-action-arrow">→</div>
+              </div>
             </div>
           ))}
         </div>
