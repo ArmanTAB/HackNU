@@ -8,6 +8,7 @@ interface RouteInfo {
   to: string;
   distance: string;
   driver: string;
+  phone?: string;
 }
 
 interface Props {
@@ -40,7 +41,6 @@ export function Topbar({ routeInfo, onBack }: Props) {
             cursor: "pointer",
             fontSize: 12,
             color: "var(--text2)",
-            fontFamily: "'Courier New', monospace",
             marginRight: 4,
           }}
         >
@@ -65,6 +65,23 @@ export function Topbar({ routeInfo, onBack }: Props) {
           <span style={{ fontSize: 10, color: "var(--text3)" }}>
             {routeInfo.driver}
           </span>
+          {routeInfo.phone && (
+            <a
+              href={`tel:${routeInfo.phone.replace(/\s+/g, "")}`}
+              style={{
+                marginLeft: 6,
+                padding: "4px 8px",
+                borderRadius: 6,
+                border: "1.5px solid var(--border)",
+                fontSize: 12,
+                color: "var(--text2)",
+                textDecoration: "none",
+                fontWeight: 700,
+              }}
+            >
+              Позвонить
+            </a>
+          )}
         </>
       ) : (
         <span className="t-sub">EMD SD40-2 · СЕР.0847 · МАРШРУТ А-07</span>

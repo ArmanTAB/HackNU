@@ -13,6 +13,7 @@ const ROUTES = [
     status: "normal" as const,
     health: 87,
     driver: "Сейткали А.",
+    phone: "+7 701 222 33 44",
   },
   {
     id: "SD40-2-0312",
@@ -25,6 +26,7 @@ const ROUTES = [
     status: "warning" as const,
     health: 61,
     driver: "Муратов Б.",
+    phone: "+7 702 111 22 33",
   },
   {
     id: "SD40-2-0521",
@@ -37,6 +39,7 @@ const ROUTES = [
     status: "critical" as const,
     health: 23,
     driver: "Ахметов Д.",
+    phone: "+7 705 888 77 66",
   },
   {
     id: "SD40-2-0934",
@@ -49,6 +52,7 @@ const ROUTES = [
     status: "normal" as const,
     health: 94,
     driver: "Жумабеков С.",
+    phone: "+7 777 333 44 55",
   },
 ];
 
@@ -100,7 +104,6 @@ export function RouteList() {
       style={{
         minHeight: "100vh",
         background: "var(--bg)",
-        fontFamily: "'Courier New', monospace",
       }}
     >
       {/* Topbar */}
@@ -108,17 +111,17 @@ export function RouteList() {
         style={{
           background: "var(--bg2)",
           borderBottom: "1.5px solid var(--border)",
-          padding: "0 28px",
-          height: 48,
+          padding: "0 32px",
+          height: 56,
           display: "flex",
           alignItems: "center",
-          gap: 14,
+          gap: 16,
           boxShadow: "0 1px 4px rgba(0,0,0,.06)",
         }}
       >
         <span
           style={{
-            fontSize: 13,
+            fontSize: 16,
             letterSpacing: ".18em",
             color: "var(--cyan)",
             textTransform: "uppercase",
@@ -129,7 +132,7 @@ export function RouteList() {
         </span>
         <span
           style={{
-            fontSize: 12,
+            fontSize: 14,
             color: "var(--text3)",
             letterSpacing: ".08em",
           }}
@@ -137,27 +140,27 @@ export function RouteList() {
           Центр управления · КТЖ
         </span>
         <div
-          style={{ marginLeft: "auto", fontSize: 12, color: "var(--text3)" }}
+          style={{ marginLeft: "auto", fontSize: 14, color: "var(--text3)" }}
         >
           {new Date().toLocaleString("ru-RU")}
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: "28px 36px" }}>
+      <div style={{ padding: "32px 40px" }}>
         {/* Header + filters */}
         <div
           style={{
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
-            marginBottom: 20,
+            marginBottom: 24,
           }}
         >
           <div>
             <div
               style={{
-                fontSize: 16,
+                fontSize: 20,
                 fontWeight: 700,
                 color: "var(--text)",
                 letterSpacing: ".08em",
@@ -166,7 +169,7 @@ export function RouteList() {
             >
               Активные маршруты
             </div>
-            <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: "var(--text3)", marginTop: 6 }}>
               {filtered.length} из {ROUTES.length} локомотивов
             </div>
           </div>
@@ -178,12 +181,11 @@ export function RouteList() {
                 key={f.key}
                 onClick={() => setFilter(f.key)}
                 style={{
-                  fontFamily: "'Courier New', monospace",
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   letterSpacing: ".08em",
-                  padding: "6px 14px",
-                  borderRadius: 4,
+                  padding: "8px 16px",
+                  borderRadius: 6,
                   border: `1.5px solid ${filter === f.key ? f.color : "var(--border)"}`,
                   background: filter === f.key ? f.color + "18" : "transparent",
                   color: filter === f.key ? f.color : "var(--text3)",
@@ -202,7 +204,7 @@ export function RouteList() {
           style={{
             background: "var(--bg2)",
             border: "1.5px solid var(--border)",
-            borderRadius: 6,
+            borderRadius: 8,
             overflow: "hidden",
           }}
         >
@@ -210,10 +212,11 @@ export function RouteList() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "110px 120px 1fr 90px 110px 40px",
-              padding: "9px 18px",
+              gridTemplateColumns: "140px 120px 1.6fr 140px 160px 160px 56px",
+              columnGap: 16,
+              padding: "12px 20px",
               borderBottom: "1.5px solid var(--border)",
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: ".13em",
               color: "var(--text3)",
               textTransform: "uppercase",
@@ -225,6 +228,7 @@ export function RouteList() {
             <span>Направление</span>
             <span style={{ textAlign: "center" }}>Здоровье</span>
             <span>Машинист</span>
+            <span>Номер</span>
             <span></span>
           </div>
 
@@ -232,9 +236,9 @@ export function RouteList() {
           {filtered.length === 0 && (
             <div
               style={{
-                padding: "32px",
+                padding: "36px",
                 textAlign: "center",
-                fontSize: 13,
+                fontSize: 15,
                 color: "var(--text3)",
               }}
             >
@@ -247,8 +251,9 @@ export function RouteList() {
               key={r.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "110px 120px 1fr 90px 110px 40px",
-                padding: "14px 18px",
+                gridTemplateColumns: "140px 120px 1.6fr 140px 160px 160px 56px",
+                columnGap: 16,
+                padding: "16px 20px",
                 borderBottom:
                   i < filtered.length - 1 ? "1px solid var(--border)" : "none",
                 alignItems: "center",
@@ -267,7 +272,7 @@ export function RouteList() {
               <div>
                 <div
                   style={{
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: 700,
                     color: "var(--text)",
                   }}
@@ -275,7 +280,7 @@ export function RouteList() {
                   {r.serial}
                 </div>
                 <div
-                  style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}
+                  style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}
                 >
                   {r.name}
                 </div>
@@ -283,7 +288,7 @@ export function RouteList() {
 
               {/* Маршрут */}
               <div
-                style={{ fontSize: 13, color: "var(--cyan)", fontWeight: 700 }}
+                style={{ fontSize: 15, color: "var(--cyan)", fontWeight: 700 }}
               >
                 {r.route}
               </div>
@@ -294,7 +299,7 @@ export function RouteList() {
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  fontSize: 13,
+                  fontSize: 14,
                   color: "var(--text)",
                 }}
               >
@@ -302,7 +307,7 @@ export function RouteList() {
                 <span style={{ color: "var(--text3)" }}>——</span>
                 <span>{r.to}</span>
                 <span
-                  style={{ fontSize: 11, color: "var(--text3)", marginLeft: 4 }}
+                  style={{ fontSize: 12, color: "var(--text3)", marginLeft: 6 }}
                 >
                   {r.distance}
                 </span>
@@ -312,7 +317,7 @@ export function RouteList() {
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontSize: 18,
+                    fontSize: 22,
                     fontWeight: 700,
                     color: STATUS_COLOR[r.status],
                   }}
@@ -321,10 +326,10 @@ export function RouteList() {
                 </div>
                 <div
                   style={{
-                    height: 2,
+                    height: 3,
                     background: "var(--border)",
-                    borderRadius: 1,
-                    marginTop: 4,
+                    borderRadius: 2,
+                    marginTop: 6,
                   }}
                 >
                   <div
@@ -332,16 +337,16 @@ export function RouteList() {
                       height: "100%",
                       width: r.health + "%",
                       background: STATUS_COLOR[r.status],
-                      borderRadius: 1,
+                      borderRadius: 2,
                       transition: "width .5s",
                     }}
                   />
                 </div>
                 <div
                   style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     color: STATUS_COLOR[r.status],
-                    marginTop: 3,
+                    marginTop: 5,
                     fontWeight: 700,
                     letterSpacing: ".06em",
                   }}
@@ -351,22 +356,27 @@ export function RouteList() {
               </div>
 
               {/* Машинист */}
-              <div style={{ fontSize: 12, color: "var(--text2)" }}>
+              <div style={{ fontSize: 14, color: "var(--text2)" }}>
                 {r.driver}
+              </div>
+
+              {/* Номер */}
+              <div style={{ fontSize: 14, color: "var(--text2)" }}>
+                {r.phone}
               </div>
 
               {/* Действие */}
               <div
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 4,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 6,
                   border: "1.5px solid var(--border)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: "var(--cyan)",
-                  fontSize: 16,
+                  fontSize: 18,
                   transition: "all .15s",
                 }}
               >

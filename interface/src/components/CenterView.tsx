@@ -34,6 +34,10 @@ export function CenterView() {
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 200);
     camera.position.set(10, 5, 15);
+    const defaultTarget = new THREE.Vector3(0, 1.5, 0);
+    const defaultPos = new THREE.Vector3(10, 5, 15);
+    let desiredTarget = defaultTarget.clone();
+    let desiredPos = defaultPos.clone();
 
     const controls = new THREE.OrbitControls(camera, canvas);
     controls.enableDamping = true;
@@ -41,7 +45,7 @@ export function CenterView() {
     controls.minDistance = 3;
     controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI * 0.52;
-    controls.target.set(0, 1.5, 0);
+    controls.target.copy(defaultTarget);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.9));
     const sun = new THREE.DirectionalLight(0xfff5e0, 2.2);
@@ -166,6 +170,7 @@ export function CenterView() {
     const meshMap: Record<string, any[]> = {};
     Object.keys(GROUPS).forEach((g) => (meshMap[g] = []));
     const origColors = new Map();
+    const groupCenters: Record<string, any> = {};
 
     function getBaseColor(name: string) {
       // Используем базовый серый цвет
@@ -461,6 +466,30 @@ export function CenterView() {
       if (tipTarget) showTip(tipTarget);
     }
 
+    function computeGroupCenters() {
+      const box = new THREE.Box3();
+      const tmp = new THREE.Vector3();
+      for (const [g, meshes] of Object.entries(meshMap)) {
+        box.makeEmpty();
+        meshes.forEach((m) => box.expandByObject(m));
+        if (!box.isEmpty()) {
+          box.getCenter(tmp);
+          groupCenters[g] = tmp.clone();
+        }
+      }
+    }
+
+    function setFocus(group: string | null) {
+      if (!group || !groupCenters[group]) {
+        desiredTarget = defaultTarget.clone();
+        desiredPos = defaultPos.clone();
+        return;
+      }
+      const center = groupCenters[group].clone();
+      desiredTarget = center.clone();
+      desiredPos = center.clone().add(new THREE.Vector3(6, 4, 8));
+    }
+
     // Load GLTF — B64 берётся из window если есть
     new THREE.GLTFLoader().load(
       "/train__locomotive_sd40-2.glb",
@@ -498,6 +527,7 @@ export function CenterView() {
           }
         });
         scene.add(root);
+        computeGroupCenters();
         applyAll();
       },
     );
@@ -507,11 +537,13 @@ export function CenterView() {
       if (selectedGroup === g) {
         selectedGroup = null;
         (window as any).__activeNode = null;
+        setFocus(null);
         applyAll();
         return;
       }
       selectedGroup = g;
       (window as any).__activeNode = g;
+      setFocus(g);
       (meshMap[g] || []).forEach((m: any) => {
         const mats = Array.isArray(m.material) ? m.material : [m.material];
         mats.forEach((mat: any) => {
@@ -586,6 +618,8 @@ export function CenterView() {
     (window as any).__speedRef = speedRef;
     const animate = () => {
       animId = requestAnimationFrame(animate);
+      controls.target.lerp(desiredTarget, 0.08);
+      camera.position.lerp(desiredPos, 0.08);
       controls.update();
       const mv = (speedRef.current / 100) * 0.2;
       poles.forEach((p: any) => {

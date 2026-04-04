@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { RouteMap } from "./RouteMap";
 
 const NODES = [
   { key: "engine",  label: "Двигатель",        icon: "⚙" },
@@ -21,7 +22,15 @@ const SCENES = [
   { key: "all",      label: "☠ Критическая авария",         color: "var(--crit)" },
 ];
 
-export function RightPanel() {
+type LatLng = [number, number];
+
+interface RouteInfo {
+  from: string;
+  to: string;
+  path: LatLng[];
+}
+
+export function RightPanel({ routeInfo }: { routeInfo?: RouteInfo }) {
   const frame = useTelemetryStore((s) => s.frame);
   const alerts = useTelemetryStore((s) => s.alerts);
   const score = frame?.health_score ?? 100;
@@ -55,6 +64,17 @@ export function RightPanel() {
 
   return (
     <div className="panel panel-r">
+      {routeInfo && routeInfo.path.length > 1 && (
+        <div className="sec">
+          <div className="sec-t">Маршрут</div>
+          <RouteMap
+            path={routeInfo.path}
+            from={routeInfo.from}
+            to={routeInfo.to}
+            expandable
+          />
+        </div>
+      )}
       <div className="sec">
         <div className="sec-t">Электрика</div>
         <div className="metric">
