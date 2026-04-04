@@ -1,0 +1,841 @@
+basePath: /api/v1
+definitions:
+  domain.Alert:
+    properties:
+      acknowledged_at:
+        type: string
+      acknowledged_by:
+        type: string
+      id:
+        type: integer
+      is_acknowledged:
+        type: boolean
+      locomotive_id:
+        type: integer
+      message:
+        type: string
+      parameter_name:
+        type: string
+      resolved_at:
+        type: string
+      severity:
+        description: warning | critical
+        type: string
+      threshold_value:
+        type: number
+      ts:
+        type: string
+      value:
+        type: number
+    type: object
+  domain.Event:
+    properties:
+      created_by:
+        type: string
+      description:
+        type: string
+      event_type:
+        description: incident | maintenance | note | replay_mark
+        type: string
+      id:
+        type: integer
+      locomotive_id:
+        type: integer
+      telemetry_snapshot:
+        type: object
+      ts:
+        type: string
+    type: object
+  domain.HealthSnapshot:
+    properties:
+      health_score:
+        type: number
+      id:
+        type: integer
+      locomotive_id:
+        type: integer
+      top_factors:
+        items:
+          type: object
+        type: array
+      ts:
+        type: string
+    type: object
+  domain.Locomotive:
+    properties:
+      depot:
+        type: string
+      id:
+        type: integer
+      manufacturer:
+        type: string
+      model:
+        type: string
+      number:
+        type: string
+      power_type:
+        description: diesel | electric
+        type: string
+      status:
+        description: active | maintenance
+        type: string
+      type:
+        description: cargo | passenger
+        type: string
+      year_built:
+        type: integer
+    type: object
+  domain.Telemetry:
+    properties:
+      ambient_temp:
+        type: number
+      battery_voltage:
+        type: number
+      brake_cylinder_pressure:
+        type: number
+      brake_pipe_pressure:
+        type: number
+      engine_rpm:
+        type: number
+      engine_temp:
+        type: number
+      fuel_consumption:
+        type: number
+      fuel_level:
+        type: number
+      gps_lat:
+        type: number
+      gps_lon:
+        type: number
+      health:
+        type: number
+      inverter_temp:
+        type: number
+      locomotive_id:
+        type: integer
+      main_reservoir_pressure:
+        type: number
+      oil_pressure:
+        type: number
+      oil_temp:
+        type: number
+      pantograph_voltage:
+        type: number
+      speed:
+        type: number
+      traction_current:
+        type: number
+      traction_force:
+        type: number
+      traction_voltage:
+        type: number
+      ts:
+        type: string
+      wheel_slip:
+        type: number
+    type: object
+  domain.TelemetryLimits:
+    properties:
+      ambient_temp_critical_max:
+        type: number
+      ambient_temp_critical_min:
+        type: number
+      ambient_temp_max:
+        type: number
+      ambient_temp_min:
+        type: number
+      ambient_temp_warning_max:
+        type: number
+      ambient_temp_warning_min:
+        type: number
+      battery_voltage_critical_max:
+        type: number
+      battery_voltage_critical_min:
+        type: number
+      battery_voltage_max:
+        type: number
+      battery_voltage_min:
+        type: number
+      battery_voltage_warning_max:
+        type: number
+      battery_voltage_warning_min:
+        type: number
+      brake_cylinder_pressure_critical_max:
+        type: number
+      brake_cylinder_pressure_critical_min:
+        type: number
+      brake_cylinder_pressure_max:
+        type: number
+      brake_cylinder_pressure_min:
+        type: number
+      brake_cylinder_pressure_warning_max:
+        type: number
+      brake_cylinder_pressure_warning_min:
+        type: number
+      brake_pipe_pressure_critical_max:
+        type: number
+      brake_pipe_pressure_critical_min:
+        type: number
+      brake_pipe_pressure_max:
+        type: number
+      brake_pipe_pressure_min:
+        type: number
+      brake_pipe_pressure_warning_max:
+        type: number
+      brake_pipe_pressure_warning_min:
+        type: number
+      engine_rpm_critical_max:
+        type: number
+      engine_rpm_critical_min:
+        type: number
+      engine_rpm_max:
+        type: number
+      engine_rpm_min:
+        type: number
+      engine_rpm_warning_max:
+        type: number
+      engine_rpm_warning_min:
+        type: number
+      engine_temp_critical_max:
+        type: number
+      engine_temp_critical_min:
+        type: number
+      engine_temp_max:
+        type: number
+      engine_temp_min:
+        type: number
+      engine_temp_warning_max:
+        type: number
+      engine_temp_warning_min:
+        type: number
+      fuel_consumption_critical_max:
+        type: number
+      fuel_consumption_critical_min:
+        type: number
+      fuel_consumption_max:
+        type: number
+      fuel_consumption_min:
+        type: number
+      fuel_consumption_warning_max:
+        type: number
+      fuel_consumption_warning_min:
+        type: number
+      fuel_level_critical_max:
+        type: number
+      fuel_level_critical_min:
+        type: number
+      fuel_level_max:
+        type: number
+      fuel_level_min:
+        type: number
+      fuel_level_warning_max:
+        type: number
+      fuel_level_warning_min:
+        type: number
+      id:
+        type: integer
+      inverter_temp_critical_max:
+        type: number
+      inverter_temp_critical_min:
+        type: number
+      inverter_temp_max:
+        type: number
+      inverter_temp_min:
+        type: number
+      inverter_temp_warning_max:
+        type: number
+      inverter_temp_warning_min:
+        type: number
+      locomotive_id:
+        type: integer
+      main_reservoir_pressure_critical_max:
+        type: number
+      main_reservoir_pressure_critical_min:
+        type: number
+      main_reservoir_pressure_max:
+        type: number
+      main_reservoir_pressure_min:
+        type: number
+      main_reservoir_pressure_warning_max:
+        type: number
+      main_reservoir_pressure_warning_min:
+        type: number
+      oil_pressure_critical_max:
+        type: number
+      oil_pressure_critical_min:
+        type: number
+      oil_pressure_max:
+        type: number
+      oil_pressure_min:
+        type: number
+      oil_pressure_warning_max:
+        type: number
+      oil_pressure_warning_min:
+        type: number
+      oil_temp_critical_max:
+        type: number
+      oil_temp_critical_min:
+        type: number
+      oil_temp_max:
+        type: number
+      oil_temp_min:
+        type: number
+      oil_temp_warning_max:
+        type: number
+      oil_temp_warning_min:
+        type: number
+      pantograph_voltage_critical_max:
+        type: number
+      pantograph_voltage_critical_min:
+        type: number
+      pantograph_voltage_max:
+        type: number
+      pantograph_voltage_min:
+        type: number
+      pantograph_voltage_warning_max:
+        type: number
+      pantograph_voltage_warning_min:
+        type: number
+      speed_critical_max:
+        type: number
+      speed_critical_min:
+        type: number
+      speed_max:
+        type: number
+      speed_min:
+        type: number
+      speed_warning_max:
+        type: number
+      speed_warning_min:
+        type: number
+      traction_current_critical_max:
+        type: number
+      traction_current_critical_min:
+        type: number
+      traction_current_max:
+        type: number
+      traction_current_min:
+        type: number
+      traction_current_warning_max:
+        type: number
+      traction_current_warning_min:
+        type: number
+      traction_force_critical_max:
+        type: number
+      traction_force_critical_min:
+        type: number
+      traction_force_max:
+        type: number
+      traction_force_min:
+        type: number
+      traction_force_warning_max:
+        type: number
+      traction_force_warning_min:
+        type: number
+      traction_voltage_critical_max:
+        type: number
+      traction_voltage_critical_min:
+        type: number
+      traction_voltage_max:
+        type: number
+      traction_voltage_min:
+        type: number
+      traction_voltage_warning_max:
+        type: number
+      traction_voltage_warning_min:
+        type: number
+      wheel_slip_critical_max:
+        type: number
+      wheel_slip_critical_min:
+        type: number
+      wheel_slip_max:
+        type: number
+      wheel_slip_min:
+        type: number
+      wheel_slip_warning_max:
+        type: number
+      wheel_slip_warning_min:
+        type: number
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Real-time telemetry dashboard for locomotive dispatchers and drivers.
+  title: Locomotive Digital Twin API
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      description: Returns 200 if DB is reachable, 503 otherwise
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - system
+  /locomotives:
+    get:
+      description: Returns all locomotives with their current status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Locomotive'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all locomotives
+      tags:
+      - locomotives
+  /locomotives/{id}:
+    get:
+      description: Returns a single locomotive by its ID
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Locomotive'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get locomotive by ID
+      tags:
+      - locomotives
+  /locomotives/{id}/alerts:
+    get:
+      description: Returns alerts for a locomotive. Filter by active status and/or
+        severity.
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Only unacknowledged alerts
+        in: query
+        name: active
+        type: boolean
+      - description: 'Filter by severity: warning or critical'
+        in: query
+        name: severity
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Alert'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List alerts
+      tags:
+      - alerts
+  /locomotives/{id}/alerts/{alert_id}/acknowledge:
+    post:
+      consumes:
+      - application/json
+      description: Marks an alert as acknowledged by the dispatcher
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Alert ID
+        in: path
+        name: alert_id
+        required: true
+        type: integer
+      - description: Acknowledger name
+        in: body
+        name: body
+        schema:
+          properties:
+            acknowledged_by:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Acknowledge an alert
+      tags:
+      - alerts
+  /locomotives/{id}/events:
+    get:
+      description: Returns manual events (incidents, maintenance notes) for a locomotive
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Start time (RFC3339), default: 1h ago'
+        in: query
+        name: from
+        type: string
+      - description: 'End time (RFC3339), default: now'
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Event'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List events
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Records a manual event (incident, maintenance, note) for a locomotive
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Event payload
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Event'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Event'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create manual event
+      tags:
+      - events
+  /locomotives/{id}/export/csv:
+    get:
+      description: Downloads a CSV file containing historical telemetry for a locomotive
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Start time (RFC3339), default: 1h ago'
+        in: query
+        name: from
+        type: string
+      - description: 'End time (RFC3339), default: now'
+        in: query
+        name: to
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: CSV file
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Export telemetry as CSV
+      tags:
+      - export
+  /locomotives/{id}/health/history:
+    get:
+      description: Returns health snapshot history for a locomotive, downsampled to
+        1 point per minute
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Start time (RFC3339), default: 1h ago'
+        in: query
+        name: from
+        type: string
+      - description: 'End time (RFC3339), default: now'
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.HealthSnapshot'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get health score history
+      tags:
+      - health
+  /locomotives/{id}/limits:
+    get:
+      description: Returns all warning and critical thresholds configured for a locomotive
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TelemetryLimits'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get telemetry limits
+      tags:
+      - telemetry
+    put:
+      consumes:
+      - application/json
+      description: Updates warning and critical thresholds for a locomotive (takes
+        effect immediately)
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Limits payload
+        in: body
+        name: limits
+        required: true
+        schema:
+          $ref: '#/definitions/domain.TelemetryLimits'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update telemetry limits
+      tags:
+      - telemetry
+  /locomotives/{id}/telemetry/current:
+    get:
+      description: Returns the latest telemetry snapshot for a locomotive
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Telemetry'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get current telemetry
+      tags:
+      - telemetry
+  /locomotives/{id}/telemetry/history:
+    get:
+      description: Returns historical telemetry records for a locomotive within a
+        time range
+      parameters:
+      - description: Locomotive ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Start time (RFC3339), default: 1h ago'
+        in: query
+        name: from
+        type: string
+      - description: 'End time (RFC3339), default: now'
+        in: query
+        name: to
+        type: string
+      - description: Max records (default 1000)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Telemetry'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get telemetry history
+      tags:
+      - telemetry
+schemes:
+- http
+swagger: "2.0"
