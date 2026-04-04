@@ -8,12 +8,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thedakeen/locomotive-twin/internal/config"
+	"github.com/thedakeen/locomotive-twin/internal/service"
+	"github.com/thedakeen/locomotive-twin/internal/simulator"
+
 	infdb "github.com/thedakeen/locomotive-twin/internal/infrastructure/db"
 	infkafka "github.com/thedakeen/locomotive-twin/internal/infrastructure/kafka"
 	infrepo "github.com/thedakeen/locomotive-twin/internal/infrastructure/repository"
 	infws "github.com/thedakeen/locomotive-twin/internal/infrastructure/ws"
-	"github.com/thedakeen/locomotive-twin/internal/service"
-	"github.com/thedakeen/locomotive-twin/internal/simulator"
 	transphttp "github.com/thedakeen/locomotive-twin/internal/transport/http"
 )
 

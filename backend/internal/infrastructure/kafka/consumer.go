@@ -6,12 +6,13 @@ import (
 	"log/slog"
 	"time"
 
-	kafkago "github.com/segmentio/kafka-go"
 	"github.com/thedakeen/locomotive-twin/internal/domain"
-	healthcalc "github.com/thedakeen/locomotive-twin/internal/health"
 	"github.com/thedakeen/locomotive-twin/internal/infrastructure/ws"
 	"github.com/thedakeen/locomotive-twin/internal/repository"
 	"github.com/thedakeen/locomotive-twin/internal/service"
+
+	kafkago "github.com/segmentio/kafka-go"
+	healthcalc "github.com/thedakeen/locomotive-twin/internal/health"
 )
 
 type Consumer struct {
