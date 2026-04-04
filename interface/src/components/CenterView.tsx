@@ -1,10 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
+import { useThemeStore } from "../store/useThemeStore";
 import { TimeScrubber } from "./TimeScrubber";
+
+const THEME = {
+  light: { sky: 0xdde3ec, ground: 0x4a7c4e, ambient: 0.35, sun: 1.6, fogNear: 35, fogFar: 90 },
+  dark:  { sky: 0x08111e, ground: 0x0e1f0e, ambient: 0.08, sun: 0.4, fogNear: 25, fogFar: 65 },
+};
 
 export function CenterView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frame = useDisplayFrame();
+  const dark = useThemeStore((s) => s.dark);
   const speed = frame?.speed ?? 0;
   const displaySpeed = Math.round(speed);
   const score = frame?.health_score ?? 100;
@@ -15,6 +22,12 @@ export function CenterView() {
     const update = (window as any).__updateTelemetry;
     if (update) update(frame);
   }, [frame]);
+
+  // обновляем тему сцены без пересоздания Three.js
+  useEffect(() => {
+    const apply = (window as any).__applySceneTheme;
+    if (apply) apply(dark);
+  }, [dark]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,7 +63,8 @@ export function CenterView() {
     controls.target.copy(defaultTarget);
     controls.target.set(0, 1, 1);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const ambient = new THREE.AmbientLight(0xffffff, 0.35);
+    scene.add(ambient);
     const sun = new THREE.DirectionalLight(0xfff5e0, 1.6);
     sun.position.set(12, 20, 14);
     sun.castShadow = true;
@@ -82,6 +96,18 @@ export function CenterView() {
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
+
+    (window as any).__applySceneTheme = (isDark: boolean) => {
+      const t = THEME[isDark ? "dark" : "light"];
+      scene.background = new THREE.Color(t.sky);
+      scene.fog = new THREE.Fog(t.sky, t.fogNear, t.fogFar);
+      renderer.setClearColor(t.sky);
+      ground.material.color.setHex(t.ground);
+      ambient.intensity = t.ambient;
+      sun.intensity = t.sun;
+    };
+    // применить текущую тему сразу при инициализации
+    (window as any).__applySceneTheme(document.documentElement.classList.contains("dark"));
 
     // Telegraph poles
     const poles: any[] = [];
