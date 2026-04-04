@@ -30,7 +30,13 @@ interface RouteInfo {
   path: LatLng[];
 }
 
-export function RightPanel({ routeInfo }: { routeInfo?: RouteInfo }) {
+export function RightPanel({
+  routeInfo,
+  showScenarios,
+}: {
+  routeInfo?: RouteInfo;
+  showScenarios?: boolean;
+}) {
   const frame = useTelemetryStore((s) => s.frame);
   const alerts = useTelemetryStore((s) => s.alerts);
   const score = frame?.health_score ?? 100;
@@ -166,19 +172,21 @@ export function RightPanel({ routeInfo }: { routeInfo?: RouteInfo }) {
         })}
       </div>
 
-      <div className="sec">
-        <div className="sec-t">Сценарии</div>
-        {SCENES.map((sc) => (
-          <button
-            key={sc.key}
-            className="scbtn"
-            style={{ color: sc.color, borderColor: sc.color }}
-            onClick={() => (window as any).runScene?.(sc.key)}
-          >
-            {sc.label}
-          </button>
-        ))}
-      </div>
+      {showScenarios && (
+        <div className="sec">
+          <div className="sec-t">Сценарии</div>
+          {SCENES.map((sc) => (
+            <button
+              key={sc.key}
+              className="scbtn"
+              style={{ color: sc.color, borderColor: sc.color }}
+              onClick={() => (window as any).runScene?.(sc.key)}
+            >
+              {sc.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="sec" style={{ flex: 1 }}>
         <div className="sec-t">Алерты</div>

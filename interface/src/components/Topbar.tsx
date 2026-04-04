@@ -14,9 +14,11 @@ interface RouteInfo {
 interface Props {
   routeInfo?: RouteInfo;
   onBack?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-export function Topbar({ routeInfo, onBack }: Props) {
+export function Topbar({ routeInfo, onBack, actionLabel, onAction }: Props) {
   const connected = useTelemetryStore((s) => s.connected);
   const [clock, setClock] = useState("--:--:--");
 
@@ -87,6 +89,11 @@ export function Topbar({ routeInfo, onBack }: Props) {
         <span className="t-sub">EMD SD40-2 · СЕР.0847 · МАРШРУТ А-07</span>
       )}
       <div className="t-right">
+        {actionLabel && onAction && (
+          <button className="t-action" onClick={onAction}>
+            {actionLabel}
+          </button>
+        )}
         <div
           className="live"
           style={{ color: connected ? "var(--ok)" : "var(--crit)" }}

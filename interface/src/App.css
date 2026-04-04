@@ -79,6 +79,17 @@ body {
   gap: 14px;
 }
 
+.t-action {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+}
+
 .live {
   display: flex;
   align-items: center;

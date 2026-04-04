@@ -77,7 +77,7 @@ const ROUTE_INFO: Record<
   },
 };
 
-export function Dashboard() {
+export function TestingDashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["SD40-2-0847"];
@@ -89,12 +89,12 @@ export function Dashboard() {
       <Topbar
         routeInfo={info}
         onBack={() => navigate("/")}
-        actionLabel="Тестирование"
-        onAction={() => navigate(`/testing/${id ?? info.serial}`)}
+        actionLabel="Мониторинг"
+        onAction={() => navigate(`/dashboard/${id ?? info.serial}`)}
       />
       <LeftPanel />
       <CenterView />
-      <RightPanel routeInfo={info} />
+      <RightPanel routeInfo={info} showScenarios />
       <BottomCharts />
     </div>
   );
