@@ -901,6 +901,10 @@ html.limits-scroll #root {
   box-shadow: 0 4px 20px rgba(0,0,0,.35);
 }
 
+html.map-modal-open .time-scrubber {
+  display: none;
+}
+
 .time-window {
   display: flex;
   gap: 6px;
@@ -1234,6 +1238,27 @@ html.limits-scroll #root {
   color: var(--text);
 }
 
+.export-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.export-select {
+  flex: 0 0 90px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.export-row .export-btn {
+  margin-top: 0;
+  flex: 1;
+}
+
 /* ── Center view ── */
 .cw {
   position: relative;
@@ -1385,6 +1410,12 @@ canvas.sp {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.route-map-loading {
+  font-size: 12px;
+  color: var(--text3);
+  padding: 8px 0;
 }
 
 .route-map-header {

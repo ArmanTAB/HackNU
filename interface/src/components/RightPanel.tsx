@@ -90,6 +90,7 @@ export function RightPanel({
   const [eventType, setEventType] = useState("note");
   const [eventText, setEventText] = useState("");
   const [eventSaving, setEventSaving] = useState(false);
+  const [exportMinutes, setExportMinutes] = useState(15);
 
   // следим за глобальным активным узлом (устанавливается из CenterView при клике на 3D)
   useEffect(() => {
@@ -130,7 +131,7 @@ export function RightPanel({
   function handleExportCsv() {
     if (!locomotiveId) return;
     const to = new Date();
-    const from = new Date(to.getTime() - 15 * 60 * 1000);
+    const from = new Date(to.getTime() - exportMinutes * 60 * 1000);
     const params = new URLSearchParams({
       from: from.toISOString(),
       to: to.toISOString(),
@@ -182,9 +183,21 @@ export function RightPanel({
             to={routeInfo.to}
             expandable
           />
-          <button className="scbtn export-btn" onClick={handleExportCsv}>
-            Экспорт CSV (15 мин)
-          </button>
+          <div className="export-row">
+            <select
+              className="export-select"
+              title="Период экспорта"
+              value={exportMinutes}
+              onChange={(e) => setExportMinutes(Number(e.target.value))}
+            >
+              <option value={5}>5 мин</option>
+              <option value={10}>10 мин</option>
+              <option value={15}>15 мин</option>
+            </select>
+            <button className="scbtn export-btn" onClick={handleExportCsv}>
+              Экспорт CSV
+            </button>
+          </div>
         </div>
       )}
 
