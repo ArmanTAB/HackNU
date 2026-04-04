@@ -783,7 +783,6 @@ export function CenterView() {
         <div className="speed-unit">КМ / ЧАС</div>
       </div>
       <canvas ref={canvasRef} id="cv" />
-      <TimeScrubber />
     </div>
   );
 }

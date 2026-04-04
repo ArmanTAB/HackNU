@@ -3,6 +3,7 @@ import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, Marker } from "react-leaflet";
 import { useStaticRoute } from "../hooks/useStaticRoute";
 import { useDisplayFrame } from "../hooks/useDisplayFrame";
+import { TimeScrubber } from "./TimeScrubber";
 
 type LatLng = [number, number];
 
@@ -113,6 +114,7 @@ export function RouteMap({ from, to, expandable }: RouteMapProps) {
               <div className="route-map-modal-title">{from} → {to}</div>
               <button className="route-map-close" onClick={() => setOpen(false)}>Закрыть</button>
             </div>
+            <TimeScrubber />
             <MapView path={path} trainPos={trainPos} full />
           </div>
         </div>

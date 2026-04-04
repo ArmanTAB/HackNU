@@ -964,8 +964,20 @@ html.limits-scroll #root {
   box-shadow: 0 4px 20px rgba(0,0,0,.35);
 }
 
-html.map-modal-open .time-scrubber {
+html.map-modal-open .cw .time-scrubber {
   display: none;
+}
+
+.route-map-modal-card .time-scrubber {
+  position: static;
+  transform: none;
+  width: 100%;
+  min-width: unset;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: none;
 }
 
 .time-window {
