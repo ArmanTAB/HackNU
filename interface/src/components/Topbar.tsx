@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { useThemeStore } from "../store/useThemeStore";
 
 interface RouteInfo {
   serial: string;
@@ -20,67 +21,35 @@ interface Props {
 
 export function Topbar({ routeInfo, onBack, actionLabel, onAction }: Props) {
   const connected = useTelemetryStore((s) => s.connected);
+  const { dark, toggle } = useThemeStore();
   const [clock, setClock] = useState("--:--:--");
 
   useEffect(() => {
-    const t = setInterval(
-      () => setClock(new Date().toLocaleTimeString("ru-RU")),
-      1000,
-    );
+    const t = setInterval(() => setClock(new Date().toLocaleTimeString("ru-RU")), 1000);
     return () => clearInterval(t);
   }, []);
 
   return (
     <div className="topbar">
       {onBack && (
-        <button
-          onClick={onBack}
-          style={{
-            background: "transparent",
-            border: "1.5px solid var(--border)",
-            borderRadius: 4,
-            padding: "2px 8px",
-            cursor: "pointer",
-            fontSize: 12,
-            color: "var(--text2)",
-            marginRight: 4,
-          }}
-        >
-          ←
-        </button>
+        <button className="t-back" onClick={onBack}>←</button>
       )}
+
       <span className="t-title">Цифровой двойник</span>
+      <div className="t-divider" />
+
       {routeInfo ? (
         <>
           <span className="t-sub">
             EMD SD40-2 · {routeInfo.serial} · МАРШРУТ {routeInfo.route}
           </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--text3)",
-              letterSpacing: ".06em",
-            }}
-          >
+          <div className="t-divider" />
+          <span className="t-route">
             {routeInfo.from} → {routeInfo.to} · {routeInfo.distance}
           </span>
-          <span style={{ fontSize: 10, color: "var(--text3)" }}>
-            {routeInfo.driver}
-          </span>
+          <span className="t-driver">{routeInfo.driver}</span>
           {routeInfo.phone && (
-            <a
-              href={`tel:${routeInfo.phone.replace(/\s+/g, "")}`}
-              style={{
-                marginLeft: 6,
-                padding: "4px 8px",
-                borderRadius: 6,
-                border: "1.5px solid var(--border)",
-                fontSize: 12,
-                color: "var(--text2)",
-                textDecoration: "none",
-                fontWeight: 700,
-              }}
-            >
+            <a className="t-call" href={`tel:${routeInfo.phone.replace(/\s+/g, "")}`}>
               Позвонить
             </a>
           )}
@@ -88,23 +57,19 @@ export function Topbar({ routeInfo, onBack, actionLabel, onAction }: Props) {
       ) : (
         <span className="t-sub">EMD SD40-2 · СЕР.0847 · МАРШРУТ А-07</span>
       )}
+
       <div className="t-right">
         {actionLabel && onAction && (
-          <button className="t-action" onClick={onAction}>
-            {actionLabel}
-          </button>
+          <button className="t-action" onClick={onAction}>{actionLabel}</button>
         )}
-        <div
-          className="live"
-          style={{ color: connected ? "var(--ok)" : "var(--crit)" }}
-        >
-          <div
-            className="live-dot"
-            style={{ background: connected ? "var(--ok)" : "var(--crit)" }}
-          />
+        <div className="live" style={{ color: connected ? "var(--ok)" : "var(--crit)" }}>
+          <div className="live-dot" style={{ background: connected ? "var(--ok)" : "var(--crit)" }} />
           {connected ? "LIVE · 1Hz" : "НЕТ СВЯЗИ"}
         </div>
-        <span style={{ fontSize: 10, color: "var(--text3)" }}>{clock}</span>
+        <button className="t-action" onClick={toggle} title="Переключить тему">
+          {dark ? "☀" : "🌙"}
+        </button>
+        <span className="t-clock">{clock}</span>
       </div>
     </div>
   );

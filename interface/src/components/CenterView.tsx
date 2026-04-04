@@ -665,6 +665,24 @@ export function CenterView() {
         if (r.position.z > 25) r.position.z -= SPACING * N_POLES;
         if (r.position.z < -25) r.position.z += SPACING * N_POLES;
       });
+
+      // Pulse status colors on the model
+      const t = performance.now() / 1000;
+      const pulse = 0.55 + 0.45 * Math.abs(Math.sin(t * Math.PI * 0.9));
+      for (const [g, meshes] of Object.entries(meshMap)) {
+        const s = selectedGroup === g ? "select" : grpWorstSt(g);
+        if (s === "ok") continue;
+        const base = COL3[s as keyof typeof COL3];
+        const pulsed = base.clone().multiplyScalar(pulse);
+        meshes.forEach((m: any) => {
+          const mats = Array.isArray(m.material) ? m.material : [m.material];
+          mats.forEach((mat: any) => {
+            if (!mat.color || (mat.name || "").toLowerCase().includes("glass")) return;
+            mat.color.copy(pulsed);
+          });
+        });
+      }
+
       renderer.render(scene, camera);
     };
     animate();

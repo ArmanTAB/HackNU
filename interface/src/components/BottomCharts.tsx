@@ -64,14 +64,15 @@ function Sparkline({
     if (!c) return;
     const pr = c.parentElement!.getBoundingClientRect();
     c.width = pr.width * devicePixelRatio;
-    c.height = 68 * devicePixelRatio;
+    c.height = 110 * devicePixelRatio;
     const ctx = c.getContext("2d")!;
     ctx.scale(devicePixelRatio, devicePixelRatio);
     const W = pr.width,
-      H = 68;
-    ctx.fillStyle = "#ffffff";
+      H = 110;
+    const dark = document.documentElement.classList.contains("dark");
+    ctx.fillStyle = dark ? "#162032" : "#ffffff";
     ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#e8ecf1";
+    ctx.strokeStyle = dark ? "#243550" : "#e4eaf3";
     ctx.lineWidth = 0.5;
     [0.25, 0.5, 0.75].forEach((y) => {
       ctx.beginPath();
@@ -84,7 +85,7 @@ function Sparkline({
     const MH = 60,
       rng = max - min || 1;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineJoin = "round";
     ctx.beginPath();
     data.forEach((v, i) => {
