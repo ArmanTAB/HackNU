@@ -65,13 +65,6 @@ func (r *Router) Setup() *fiber.App {
 	auth.Post("/register", r.authHandler.Register)
 	auth.Post("/login", r.authHandler.Login)
 
-	// All remaining routes require a valid JWT
-	r.app.Use(JWTMiddleware(r.authSvc))
-
-	// Healthz
-	r.app.Get("/healthz", r.healthz)
-
-	// WebSocket upgrade middleware
 	r.app.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
@@ -79,6 +72,12 @@ func (r *Router) Setup() *fiber.App {
 		return fiber.ErrUpgradeRequired
 	})
 	r.app.Get("/ws", websocket.New(r.handleWS))
+
+	// All remaining routes require a valid JWT
+	r.app.Use(JWTMiddleware(r.authSvc))
+
+	// Healthz
+	r.app.Get("/healthz", r.healthz)
 
 	api := r.app.Group("/api/v1")
 
