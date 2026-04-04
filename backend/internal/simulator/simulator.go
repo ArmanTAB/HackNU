@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"log/slog"
 	"math/rand"
@@ -10,6 +11,38 @@ import (
 	"github.com/thedakeen/locomotive-twin/internal/domain"
 	"github.com/thedakeen/locomotive-twin/internal/infrastructure/kafka"
 )
+
+//go:embed assets/export.geojson
+var routeGeoJSON []byte
+
+type geoJSONFile struct {
+	Features []struct {
+		Geometry struct {
+			Type        string         `json:"type"`
+			Coordinates [][][2]float64 `json:"coordinates"`
+		} `json:"geometry"`
+	} `json:"features"`
+}
+
+func loadRoutePoints() [][2]float64 {
+	var gj geoJSONFile
+	if err := json.Unmarshal(routeGeoJSON, &gj); err != nil {
+		slog.Warn("simulator: failed to parse route geojson", "err", err)
+		return nil
+	}
+	for _, f := range gj.Features {
+		if f.Geometry.Type == "MultiLineString" {
+			var pts [][2]float64
+			for _, line := range f.Geometry.Coordinates {
+				pts = append(pts, line...)
+			}
+			slog.Info("simulator: loaded route", "points", len(pts))
+			return pts
+		}
+	}
+	slog.Warn("simulator: no MultiLineString found in geojson")
+	return nil
+}
 
 type locoState struct {
 	locomotiveID int
@@ -39,6 +72,10 @@ type locoState struct {
 	anomalyParam      string
 	anomalyTicks      int
 	ticksSinceAnomaly int
+
+	// Route playback
+	routePoints [][2]float64
+	routeIndex  int
 
 	profile locoProfile
 }
@@ -112,9 +149,14 @@ type Simulator struct {
 }
 
 func New(locomotiveIDs []int, producer *kafka.Producer, hz int) *Simulator {
+	routePts := loadRoutePoints()
 	states := make(map[int]*locoState, len(locomotiveIDs))
-	for _, id := range locomotiveIDs {
-		states[id] = initialState(id)
+	for i, id := range locomotiveIDs {
+		startIndex := 0
+		if len(routePts) > 0 && len(locomotiveIDs) > 1 {
+			startIndex = i * len(routePts) / len(locomotiveIDs)
+		}
+		states[id] = initialState(id, routePts, startIndex)
 	}
 	return &Simulator{
 		states:   states,
@@ -123,11 +165,18 @@ func New(locomotiveIDs []int, producer *kafka.Producer, hz int) *Simulator {
 	}
 }
 
-func initialState(id int) *locoState {
+func initialState(id int, routePts [][2]float64, routeIdx int) *locoState {
 	p := profileFor(id)
 	initialAnomalyOffset := 0
 	if p.anomalyMinInterval > 0 {
 		initialAnomalyOffset = rand.Intn(p.anomalyMinInterval)
+	}
+	gpsLat := 51.1801 + rand.Float64()*0.01
+	gpsLon := 71.4460 + rand.Float64()*0.01
+	if len(routePts) > 0 {
+		pt := routePts[routeIdx]
+		gpsLon = pt[0]
+		gpsLat = pt[1]
 	}
 	return &locoState{
 		locomotiveID:          id,
@@ -149,11 +198,20 @@ func initialState(id int) *locoState {
 		brakeCylinderPressure: 0.1 + rand.Float64()*0.1,
 		mainReservoirPressure: 8.5 + rand.Float64()*0.5,
 		ambientTemp:           15 + rand.Float64()*10,
-		gpsLat:                51.1801 + rand.Float64()*0.01,
-		gpsLon:                71.4460 + rand.Float64()*0.01,
+		gpsLat:                gpsLat,
+		gpsLon:                gpsLon,
 		ticksSinceAnomaly:     initialAnomalyOffset,
+		routePoints:           routePts,
+		routeIndex:            (routeIdx + 1) % max(len(routePts), 1),
 		profile:               p,
 	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (s *Simulator) Run(ctx context.Context) {
@@ -257,8 +315,15 @@ func (s *Simulator) tick(st *locoState) {
 	st.brakeCylinderPressure = ema(st.brakeCylinderPressure, clamp(st.brakeCylinderPressure+randn(0.02), 0, 4), alpha)
 	st.mainReservoirPressure = ema(st.mainReservoirPressure, clamp(st.mainReservoirPressure+randn(0.05), 5, 10), alpha)
 	st.ambientTemp = ema(st.ambientTemp, clamp(st.ambientTemp+randn(0.1), -40, 50), alpha)
-	st.gpsLat += randn(0.0001)
-	st.gpsLon += randn(0.0001)
+	if len(st.routePoints) > 0 {
+		pt := st.routePoints[st.routeIndex]
+		st.gpsLon = pt[0]
+		st.gpsLat = pt[1]
+		st.routeIndex = (st.routeIndex + 1) % len(st.routePoints)
+	} else {
+		st.gpsLat += randn(0.0001)
+		st.gpsLon += randn(0.0001)
+	}
 
 	// Drift toward profile baseline — pulls values back after EMA+noise
 	if p.driftStrength > 0 {
