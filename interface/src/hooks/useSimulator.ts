@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTelemetryStore } from "../store/useTelemetryStore";
+import { api } from "../api/client";
 import type { TelemetryFrame } from "../types/telemetry";
 
 type LatLng = [number, number];
@@ -40,17 +41,50 @@ type Limit = {
   critMax?: number;
 };
 
-const LIMITS: Record<string, Limit> = {
-  speed: { min: 0, max: 120, warnMin: 100, warnMax: 115, critMin: 115, critMax: 999 },
-  rpm: { min: 600, max: 1800, warnMin: 1600, warnMax: 1800, critMin: 1800, critMax: 9999 },
-  engine_temp: { min: 60, max: 95, warnMin: 90, warnMax: 100, critMin: 100, critMax: 999 },
-  oil_pressure: { min: 3.5, max: 6, warnMin: 2.5, warnMax: 3.5, critMin: 0, critMax: 2.5 },
-  fuel_level: { min: 20, max: 100, warnMin: 15, warnMax: 20, critMin: 0, critMax: 15 },
-  voltage: { min: 600, max: 750, warnMin: 550, warnMax: 600, critMin: 0, critMax: 520 },
-  current: { min: 0, max: 2000, warnMin: 2000, warnMax: 2300, critMin: 2300, critMax: 9999 },
-  traction: { min: 0, max: 400, warnMin: 400, warnMax: 500, critMin: 500, critMax: 9999 },
-  fuel_rate: { min: 0, max: 80, warnMin: 80, warnMax: 100, critMin: 100, critMax: 9999 },
+// Fallback limits used until backend responds
+let LIMITS: Record<string, Limit> = {
+  speed:       { min: 0,   max: 120,  warnMin: 100, warnMax: 115, critMin: 115, critMax: 9999 },
+  rpm:         { min: 600, max: 1800, warnMin: 1600, warnMax: 1800, critMin: 1800, critMax: 9999 },
+  engine_temp: { min: 60,  max: 95,   warnMin: 90,  warnMax: 100, critMin: 100, critMax: 999 },
+  oil_pressure:{ min: 3.5, max: 6,    warnMin: 2.5, warnMax: 3.5, critMin: 0,   critMax: 2.5 },
+  fuel_level:  { min: 20,  max: 100,  warnMin: 15,  warnMax: 20,  critMin: 0,   critMax: 15 },
+  voltage:     { min: 600, max: 750,  warnMin: 550, warnMax: 600, critMin: 0,   critMax: 520 },
+  current:     { min: 0,   max: 2000, warnMin: 2000, warnMax: 2300, critMin: 2300, critMax: 9999 },
+  traction:    { min: 0,   max: 400,  warnMin: 400, warnMax: 500, critMin: 500, critMax: 9999 },
+  fuel_rate:   { min: 0,   max: 80,   warnMin: 80,  warnMax: 100, critMin: 100, critMax: 9999 },
 };
+
+function applyBackendLimits(locomotiveId: string | number, setLimits: (l: any) => void) {
+  api.get<Record<string, number | null>>(`/api/v1/locomotives/${locomotiveId}/limits`)
+    .then((data) => {
+      if (!data) { console.warn("[useSimulator] limits: empty response"); return; }
+      console.log("[useSimulator] limits loaded from backend:", data);
+      setLimits(data);
+      // Mapping: min/max = normal range, warnMin/warnMax = warning zone, critMin/critMax = critical zone
+      const m: Record<string, Limit> = {
+        // upper-threshold params (high = bad)
+        speed:        { min: 0,   max: data.speed_warning_max ?? 120,       warnMin: data.speed_warning_max ?? 100,       warnMax: data.speed_critical_max ?? 115,       critMin: data.speed_critical_max ?? 115,       critMax: 9999 },
+        rpm:          { min: 0,   max: data.engine_rpm_warning_max ?? 1800,  warnMin: data.engine_rpm_warning_max ?? 1600,  warnMax: data.engine_rpm_critical_max ?? 1800,  critMin: data.engine_rpm_critical_max ?? 1800,  critMax: 9999 },
+        engine_temp:  { min: 0,   max: data.engine_temp_warning_max ?? 95,   warnMin: data.engine_temp_warning_max ?? 90,   warnMax: data.engine_temp_critical_max ?? 100,  critMin: data.engine_temp_critical_max ?? 100,  critMax: 999 },
+        current:      { min: 0,   max: data.traction_current_warning_max ?? 2000, warnMin: data.traction_current_warning_max ?? 2000, warnMax: data.traction_current_critical_max ?? 2300, critMin: data.traction_current_critical_max ?? 2300, critMax: 9999 },
+        traction:     { min: 0,   max: data.traction_force_warning_max ?? 400,    warnMin: data.traction_force_warning_max ?? 400,    warnMax: data.traction_force_critical_max ?? 500,   critMin: data.traction_force_critical_max ?? 500,   critMax: 9999 },
+        fuel_rate:    { min: 0,   max: data.fuel_consumption_warning_max ?? 80,   warnMin: data.fuel_consumption_warning_max ?? 80,   warnMax: data.fuel_consumption_critical_max ?? 100, critMin: data.fuel_consumption_critical_max ?? 100, critMax: 9999 },
+        // lower-threshold params (low = bad)
+        oil_pressure: { min: data.oil_pressure_warning_min ?? 3.5, max: data.oil_pressure_max ?? 6, warnMin: data.oil_pressure_critical_min ?? 2.5, warnMax: data.oil_pressure_warning_min ?? 3.5, critMin: 0, critMax: data.oil_pressure_critical_min ?? 2.5 },
+        fuel_level:   { min: data.fuel_level_warning_min ?? 20,    max: 100, warnMin: data.fuel_level_critical_min ?? 15,  warnMax: data.fuel_level_warning_min ?? 20,    critMin: 0, critMax: data.fuel_level_critical_min ?? 15 },
+        // range param (both sides matter)
+        voltage:      { min: data.traction_voltage_warning_min ?? 600, max: data.traction_voltage_warning_max ?? 750, warnMin: data.traction_voltage_critical_min ?? 550, warnMax: data.traction_voltage_warning_min ?? 600, critMin: 0, critMax: data.traction_voltage_critical_min ?? 520 },
+      };
+      // Remove null values
+      for (const key of Object.keys(m)) {
+        for (const field of Object.keys(m[key]) as (keyof Limit)[]) {
+          if (m[key][field] == null) delete m[key][field];
+        }
+      }
+      LIMITS = m;
+    })
+    .catch((err) => console.warn("[useSimulator] limits fetch failed:", err));
+}
 
 function inRange(v: number, min?: number, max?: number) {
   if (min !== undefined && v < min) return false;
@@ -97,13 +131,14 @@ function makeState() {
   };
 }
 
-export function useSimulator() {
-  const { setFrame, setConnected } = useTelemetryStore();
+export function useSimulator(locomotiveId: string | number = 1) {
+  const { setFrame, setConnected, setLimits } = useTelemetryStore();
   const state = useRef(makeState());
   const id = useRef(0);
 
   useEffect(() => {
     setConnected(true);
+    applyBackendLimits(locomotiveId, setLimits);
 
     // expose runScene globally как в оригинале
     (window as any).runScene = (sc: string) => {

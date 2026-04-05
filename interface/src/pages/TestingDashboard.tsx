@@ -68,7 +68,7 @@ export function TestingDashboard() {
   const navigate = useNavigate();
   const info = ROUTE_INFO[id ?? ""] ?? ROUTE_INFO["1"];
 
-  useSimulator();
+  useSimulator(id ?? 1);
 
   return (
     <div className="shell">
