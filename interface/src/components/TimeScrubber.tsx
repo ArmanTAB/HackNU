@@ -112,7 +112,19 @@ export function TimeScrubber() {
 
       {/* время */}
       <span className={isLive ? "time-label time-label--live" : "time-label"}>
-        {isLive ? "сейчас" : fmtOffset(offsetMs)}
+        {isLive ? "сейчас" : (
+          <>
+            {fmtOffset(offsetMs)}
+            {currentSnap && (
+              <span className="time-label-abs">
+                {new Date(currentSnap.ts).toLocaleString("ru-RU", {
+                  day: "2-digit", month: "2-digit",
+                  hour: "2-digit", minute: "2-digit", second: "2-digit",
+                })}
+              </span>
+            )}
+          </>
+        )}
       </span>
     </div>
   );

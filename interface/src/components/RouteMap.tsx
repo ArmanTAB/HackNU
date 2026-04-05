@@ -73,8 +73,9 @@ export function RouteMap({ from, to, expandable }: RouteMapProps) {
       : null;
 
   useEffect(() => {
-    if (trainPos) console.log("[GPS]", trainPos[0].toFixed(6), trainPos[1].toFixed(6));
-  }, [trainPos]);
+    if (frame?.fuel_level != null)
+      console.log("[FUEL]", `level=${frame.fuel_level}%`, `rate=${frame.fuel_rate ?? 0}л/ч`);
+  }, [frame?.fuel_level, frame?.fuel_rate]);
 
   useEffect(() => {
     const root = document.documentElement;

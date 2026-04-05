@@ -240,15 +240,18 @@ export function LimitsPage() {
                   const field = `${g.key}_${s.key}`;
                   return (
                     <div className="limits-cell" key={field}>
-                      <input
-                        className="limits-input"
-                        type="number"
-                        step="0.1"
-                        value={form[field] ?? ""}
-                        onChange={(e) => handleChange(field, e.target.value)}
-                        placeholder="—"
-                        title={field}
-                      />
+                      <div className="limits-input-wrap">
+                        <input
+                          className="limits-input"
+                          type="number"
+                          step="0.1"
+                          value={form[field] ?? ""}
+                          onChange={(e) => handleChange(field, e.target.value)}
+                          placeholder="—"
+                          title={field}
+                        />
+                        <span className="limits-input-unit">{g.unit}</span>
+                      </div>
                     </div>
                   );
                 })}
