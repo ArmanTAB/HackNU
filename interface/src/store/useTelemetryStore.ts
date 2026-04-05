@@ -5,20 +5,39 @@ const HISTORY_MAX  = 60;   // для спарклайнов
 const SNAPSHOT_MAX = 300;  // 5 минут при 1 Гц
 
 export interface TelemetryLimits {
-  speed_warning_max?:              number | null;
-  speed_critical_max?:             number | null;
-  engine_temp_warning_max?:        number | null;
-  engine_temp_critical_max?:       number | null;
-  oil_pressure_warning_max?:       number | null;
-  oil_pressure_critical_max?:      number | null;
-  fuel_level_warning_max?:         number | null;
-  fuel_level_critical_max?:        number | null;
-  engine_rpm_warning_max?:         number | null;
-  engine_rpm_critical_max?:        number | null;
-  traction_voltage_warning_max?:   number | null;
-  traction_voltage_critical_max?:  number | null;
-  traction_current_warning_max?:   number | null;
-  traction_current_critical_max?:  number | null;
+  // Speed
+  speed_warning_max?:                  number | null;
+  speed_critical_max?:                 number | null;
+  // Engine temperature
+  engine_temp_warning_max?:            number | null;
+  engine_temp_critical_max?:           number | null;
+  // Oil pressure (low = bad)
+  oil_pressure_warning_min?:           number | null;
+  oil_pressure_critical_min?:          number | null;
+  oil_pressure_warning_max?:           number | null;
+  oil_pressure_critical_max?:          number | null;
+  // Fuel level (low = bad)
+  fuel_level_warning_min?:             number | null;
+  fuel_level_critical_min?:            number | null;
+  fuel_level_warning_max?:             number | null;
+  fuel_level_critical_max?:            number | null;
+  // Engine RPM
+  engine_rpm_warning_max?:             number | null;
+  engine_rpm_critical_max?:            number | null;
+  // Traction voltage (range: both low and high = bad)
+  traction_voltage_warning_min?:       number | null;
+  traction_voltage_critical_min?:      number | null;
+  traction_voltage_warning_max?:       number | null;
+  traction_voltage_critical_max?:      number | null;
+  // Traction current
+  traction_current_warning_max?:       number | null;
+  traction_current_critical_max?:      number | null;
+  // Traction force
+  traction_force_warning_max?:         number | null;
+  traction_force_critical_max?:        number | null;
+  // Fuel consumption
+  fuel_consumption_warning_max?:       number | null;
+  fuel_consumption_critical_max?:      number | null;
   [key: string]: number | null | undefined;
 }
 

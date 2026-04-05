@@ -105,15 +105,39 @@ function statusFromLimits(v: number, lim: Limit): "ok" | "warn" | "crit" {
   return "crit";
 }
 
+// Params whose critical status immediately kills the locomotive (hard stop)
+const BLOCKERS = ["engine_temp", "oil_pressure"];
+
+// Subsystems with weights — must sum to 1.0
+const SUBSYSTEMS: { params: string[]; weight: number }[] = [
+  { params: ["engine_temp", "rpm", "oil_pressure"], weight: 0.40 },
+  { params: ["voltage", "current"],                  weight: 0.30 },
+  { params: ["speed", "traction"],                   weight: 0.20 },
+  { params: ["fuel_level", "fuel_rate"],              weight: 0.10 },
+];
+
+// ok=100%, warn=50%, crit=0% — reflects degraded but operational vs failed
+const PARAM_SCORE: Record<"ok" | "warn" | "crit", number> = { ok: 1.0, warn: 0.5, crit: 0.0 };
+
 function calcHealth(s: ReturnType<typeof makeState>): number {
-  let h = 100;
-  for (const [key, lim] of Object.entries(LIMITS)) {
-    const v = (s as any)[key] as number;
-    const st = statusFromLimits(v, lim);
-    if (st === "crit") h -= 18;
-    else if (st === "warn") h -= 7;
+  // 1. Hard stop: any blocker in crit → health = 0
+  for (const p of BLOCKERS) {
+    const lim = LIMITS[p];
+    if (lim && statusFromLimits((s as any)[p], lim) === "crit") return 0;
   }
-  return Math.max(0, Math.min(100, h));
+
+  // 2. Weighted subsystem average
+  let total = 0;
+  for (const sys of SUBSYSTEMS) {
+    const avg = sys.params.reduce((sum, p) => {
+      const lim = LIMITS[p];
+      const st = lim ? statusFromLimits((s as any)[p], lim) : "ok";
+      return sum + PARAM_SCORE[st];
+    }, 0) / sys.params.length;
+    total += avg * sys.weight;
+  }
+
+  return Math.round(Math.max(0, Math.min(100, total * 100)));
 }
 
 function makeState() {

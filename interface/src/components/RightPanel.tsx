@@ -219,41 +219,16 @@ export function RightPanel({
               return (
                 <button
                   key={n.key}
-                  className="sbtn"
+                  className={`sbtn${isActive ? " sbtn--active" : ""}`}
                   onClick={() => handleNodeClick(n.key)}
-                  style={
-                    isActive
-                      ? {
-                          background: "var(--bg3)",
-                          borderColor: nodeColor,
-                          color: "var(--text)",
-                          boxShadow: `0 0 0 1px ${nodeColor}33`,
-                        }
-                      : undefined
-                  }
+                  style={isActive ? { borderColor: nodeColor, boxShadow: `0 0 0 1px ${nodeColor}33` } : undefined}
                 >
                   <div
-                    className="sico"
-                    style={{
-                      background: nodeColor,
-                      boxShadow: isActive ? `0 0 6px ${nodeColor}` : "none",
-                      transform: isActive ? "scale(1.4)" : "scale(1)",
-                      transition: "all .2s",
-                    }}
+                    className={`sico${isActive ? " sico--active" : ""}`}
+                    style={{ background: nodeColor, boxShadow: isActive ? `0 0 6px ${nodeColor}` : "none" }}
                   />
-                  <span style={{ flex: 1 }}>{n.label}</span>
-                  {isActive && (
-                    <span
-                      style={{
-                        fontSize: "8px",
-                        letterSpacing: ".08em",
-                        color: nodeColor,
-                        fontWeight: 700,
-                      }}
-                    >
-                      ВЫБ
-                    </span>
-                  )}
+                  <span className="sbtn-label">{n.label}</span>
+                  {isActive && <span className="node-badge" style={{ color: nodeColor }}>ВЫБ</span>}
                 </button>
               );
             })}
@@ -265,8 +240,8 @@ export function RightPanel({
               const isOpen = expandedScene === sc.key;
               const params = SCENE_PARAMS[sc.key] ?? [];
               return (
-                <div key={sc.key} style={{ marginBottom: 5 }}>
-                  <div style={{ display: "flex", gap: 4 }}>
+                <div key={sc.key} className="scene-item">
+                  <div className="scene-row">
                     <button
                       className="scbtn"
                       style={{ color: sc.color, borderColor: sc.color, flex: 1, marginBottom: 0 }}
@@ -284,15 +259,8 @@ export function RightPanel({
                     </button>
                     {params.length > 0 && (
                       <button
-                        style={{
-                          border: `1.5px solid ${sc.color}`,
-                          borderRadius: 4,
-                          background: "transparent",
-                          color: sc.color,
-                          cursor: "pointer",
-                          padding: "0 8px",
-                          fontSize: 12,
-                        }}
+                        className="scene-expand-btn"
+                        style={{ borderColor: sc.color, color: sc.color }}
                         onClick={() => setExpandedScene(isOpen ? null : sc.key)}
                       >
                         {isOpen ? "▲" : "▼"}
@@ -300,18 +268,18 @@ export function RightPanel({
                     )}
                   </div>
                   {isOpen && (
-                    <div style={{ padding: "8px 4px 2px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div className="slider-group">
                       {params.map((k) => {
                         const meta = PARAM_META[k];
                         const val = sliderVals[k] ?? 0;
                         return (
                           <div key={k}>
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text2)", marginBottom: 3 }}>
+                            <div className="slider-label">
                               <span>{meta.label}</span>
                               <b style={{ color: sc.color }}>{val}{meta.unit}</b>
                             </div>
                             <input
-                            title="param"
+                              title="param"
                               type="range"
                               min={meta.min}
                               max={meta.max}
@@ -412,18 +380,7 @@ export function RightPanel({
                   </div>
                 </div>
                 {!a.is_acknowledged && locomotiveId && (
-                  <button
-                    onClick={() => handleAck(a.id)}
-                    style={{
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                      padding: "4px 8px",
-                      background: "transparent",
-                      fontSize: 12,
-                      cursor: "pointer",
-                      color: "var(--text2)",
-                    }}
-                  >
+                  <button className="ack-btn" onClick={() => handleAck(a.id)}>
                     ACK
                   </button>
                 )}

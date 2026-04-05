@@ -316,7 +316,7 @@ export function CenterView() {
       chimney: ["rpm"],
       wheels: ["speed"],
       bogie: ["oil", "traction"],
-      body: [],  // убрали "temp" - body не реагирует на температуру
+      body: [],  
       fuel: ["fuel", "cons"],
       roof: ["volt", "curr"],
       lights: ["volt"],
@@ -766,7 +766,6 @@ export function CenterView() {
     };
   }, []);
 
-  // обновляем speed через ref без ре-рендера Three.js
   useEffect(() => {
     const ref = (window as any).__speedRef;
     if (ref) ref.current = speed;
